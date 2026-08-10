@@ -40,6 +40,8 @@ export type SocialPost = {
   publishedAt?: string;
   targetConnectionIds?: string[];
   results: Array<{
+    connectionId?: string;
+    connectionType?: string;
     connectionName: string;
     status: string;
     externalUrl?: string;
