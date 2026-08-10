@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { Share2, Loader2 } from 'lucide-react';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { AuthShell, AuthField } from '@/components/AuthShell';
 
 export default function LoginPage() {
   const { login, user, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const verified = !!(location.state as { emailVerified?: boolean } | null)?.emailVerified;
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -28,60 +32,57 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-purple-50 via-white to-fuchsia-50">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="inline-flex w-14 h-14 rounded-2xl bg-purple-600 text-white items-center justify-center mb-4">
-            <Share2 className="w-7 h-7" />
+    <AuthShell
+      title="Welcome back"
+      subtitle="Sign in with your Social Deck account to compose, connect platforms, and run Auto."
+    >
+      <form onSubmit={onSubmit} className="space-y-4">
+        {verified && (
+          <div className="flex items-start gap-2 rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-2.5 text-xs text-emerald-800">
+            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>Email verified. You can sign in now.</span>
           </div>
-          <h1 className="sd-display text-3xl font-bold">Social Deck</h1>
-          <p className="text-sm text-[var(--sd-muted)] mt-2">
-            Sign in with your Social Deck account
-          </p>
-          <p className="text-xs text-[var(--sd-muted)] mt-1">
-            Separate from Time To Future — create an account if you are new here.
-          </p>
-        </div>
-        <form
-          onSubmit={onSubmit}
-          className="rounded-2xl border border-purple-100 bg-white p-6 shadow-sm space-y-4"
+        )}
+        {error && (
+          <div className="rounded-xl bg-rose-50 border border-rose-100 px-3 py-2.5 text-xs text-rose-700">
+            {error}
+          </div>
+        )}
+
+        <AuthField
+          label="Email"
+          type="email"
+          required
+          autoComplete="email"
+          value={email}
+          onChange={setEmail}
+          placeholder="you@email.com"
+        />
+        <AuthField
+          label="Password"
+          type="password"
+          required
+          autoComplete="current-password"
+          value={password}
+          onChange={setPassword}
+          placeholder="Your password"
+        />
+
+        <button
+          type="submit"
+          disabled={busy}
+          className="w-full mt-1 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 active:scale-[0.99] transition disabled:opacity-60 flex items-center justify-center gap-2 shadow-md shadow-purple-600/20"
         >
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Password</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full py-2.5 rounded-xl bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 disabled:opacity-60 flex items-center justify-center gap-2"
-          >
-            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign in'}
-          </button>
-          <p className="text-center text-xs text-gray-500">
-            No account?{' '}
-            <Link to="/signup" className="text-purple-600 font-semibold hover:underline">
-              Sign up
-            </Link>
-          </p>
-        </form>
-      </div>
-    </div>
+          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign in'}
+        </button>
+
+        <p className="text-center text-xs text-[var(--sd-muted)] pt-1">
+          New to Social Deck?{' '}
+          <Link to="/signup" className="text-purple-700 font-semibold hover:underline">
+            Create an account
+          </Link>
+        </p>
+      </form>
+    </AuthShell>
   );
 }

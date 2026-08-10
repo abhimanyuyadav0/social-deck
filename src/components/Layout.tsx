@@ -36,15 +36,15 @@ export default function Layout() {
   }, [menuOpen]);
 
   return (
-    <div className="min-h-screen flex bg-[var(--sd-bg)]">
-      <aside className="w-56 shrink-0 border-r border-[var(--sd-line)] bg-white flex flex-col">
-        <div className="h-14 px-4 flex items-center gap-2 border-b border-[var(--sd-line)]">
+    <div className="h-dvh flex overflow-hidden bg-[var(--sd-bg)]">
+      <aside className="w-56 shrink-0 h-full border-r border-[var(--sd-line)] bg-white flex flex-col">
+        <div className="h-14 shrink-0 px-4 flex items-center gap-2 border-b border-[var(--sd-line)]">
           <span className="w-8 h-8 rounded-lg bg-purple-600 text-white flex items-center justify-center">
             <Share2 className="w-4 h-4" />
           </span>
           <span className="font-semibold tracking-tight sd-display">Social Deck</span>
         </div>
-        <nav className="flex-1 p-2 space-y-0.5">
+        <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
           {nav.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
@@ -63,12 +63,12 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
-        <div className="p-3 border-t border-[var(--sd-line)] text-xs text-[var(--sd-muted)] truncate">
+        <div className="p-3 shrink-0 border-t border-[var(--sd-line)] text-xs text-[var(--sd-muted)] truncate">
           {user?.email}
         </div>
       </aside>
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 border-b border-[var(--sd-line)] bg-white/80 backdrop-blur flex items-center justify-end px-4 gap-2">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+        <header className="h-14 shrink-0 border-b border-[var(--sd-line)] bg-white/80 backdrop-blur flex items-center justify-end px-4 gap-2">
           <div className="relative" ref={menuRef}>
             <button
               type="button"
@@ -95,7 +95,7 @@ export default function Layout() {
             )}
           </div>
         </header>
-        <main className="flex-1 p-6 overflow-auto">
+        <main className="flex-1 min-h-0 p-6 overflow-y-auto">
           <Outlet />
         </main>
       </div>

@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'glintly-ui';
-import { Users, Trash2, X, ExternalLink, Key, Sparkles } from 'lucide-react';
+import { Users, Trash2, X, ExternalLink, Key, Sparkles, Linkedin } from 'lucide-react';
 import {
   useConnections,
   useConnectCommunity,
+  useStartLinkedInConnect,
   useDisconnectConnection,
   usePlatforms,
   useAiConfig,
@@ -263,9 +265,11 @@ function AiContextForm({
 }
 
 export default function ConnectionsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data, isLoading } = useConnections();
   const { data: platformsData } = usePlatforms();
   const connectCommunity = useConnectCommunity();
+  const startLinkedIn = useStartLinkedInConnect();
   const disconnect = useDisconnectConnection();
   const { data: aiData } = useAiConfig();
   const connectAi = useConnectAi();
@@ -285,9 +289,25 @@ export default function ConnectionsPage() {
   const connections = data?.data?.connections ?? [];
   const communityConn = connections.find((c) => c.type === 'ttf_community');
   const hasCommunity = communityConn?.status === 'connected';
+  const linkedInConn = connections.find((c) => c.type === 'linkedin');
+  const hasLinkedIn = linkedInConn?.status === 'connected';
 
   const [showCommunityModal, setShowCommunityModal] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
+
+  useEffect(() => {
+    const status = searchParams.get('linkedin');
+    if (!status) return;
+    if (status === 'connected') {
+      toast.success('LinkedIn connected');
+    } else if (status === 'error') {
+      toast.error(searchParams.get('message') || 'LinkedIn connect failed');
+    }
+    const next = new URLSearchParams(searchParams);
+    next.delete('linkedin');
+    next.delete('message');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const connectWithCommunityKey = (developerKey: string) => {
     connectCommunity.mutate(
@@ -315,6 +335,20 @@ export default function ConnectionsPage() {
     );
   };
 
+  const connectLinkedIn = () => {
+    startLinkedIn.mutate(undefined, {
+      onSuccess: (res) => {
+        const url = res?.data?.url;
+        if (!url) {
+          toast.error('No LinkedIn authorize URL returned');
+          return;
+        }
+        window.location.href = url;
+      },
+      onError: (e: Error) => toast.error(e.message),
+    });
+  };
+
   return (
     <div className="max-w-2xl space-y-6">
       <ConnectCommunityModal
@@ -334,7 +368,8 @@ export default function ConnectionsPage() {
         <h1 className="sd-display text-xl font-bold">Connections</h1>
         <p className="text-sm text-[var(--sd-muted)] mt-1">
           Connect platforms and AI — Community uses a developer key (
-          <code className="text-purple-700">cm_...</code>), AI uses your OpenAI key.
+          <code className="text-purple-700">cm_...</code>), LinkedIn uses OAuth, AI uses your
+          OpenAI key.
         </p>
       </div>
 
@@ -385,6 +420,55 @@ export default function ConnectionsPage() {
               className="px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-semibold shrink-0"
             >
               Connect
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-[var(--sd-line)] bg-white p-4 space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
+            <Linkedin className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm">LinkedIn</p>
+            <p className="text-xs text-[var(--sd-muted)]">
+              Authorize with LinkedIn to publish posts to your personal profile. Requires Sign In
+              with LinkedIn (OIDC) and Share on LinkedIn on your LinkedIn app.
+            </p>
+            {hasLinkedIn && (
+              <p className="text-xs text-emerald-700 mt-1">
+                Linked as{' '}
+                {linkedInConn?.config?.linkedinProfileName ||
+                  linkedInConn?.config?.linkedinEmail ||
+                  'LinkedIn'}
+                {linkedInConn?.config?.linkedinEmail &&
+                  linkedInConn?.config?.linkedinProfileName && (
+                    <> · {linkedInConn.config.linkedinEmail}</>
+                  )}
+              </p>
+            )}
+          </div>
+          {hasLinkedIn ? (
+            <div className="flex flex-col items-end gap-1 shrink-0">
+              <span className="text-xs text-emerald-600 font-medium">Connected</span>
+              <button
+                type="button"
+                onClick={connectLinkedIn}
+                disabled={startLinkedIn.isPending}
+                className="text-xs text-purple-600 hover:underline disabled:opacity-50"
+              >
+                {startLinkedIn.isPending ? 'Redirecting…' : 'Reconnect'}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={connectLinkedIn}
+              disabled={startLinkedIn.isPending}
+              className="px-3 py-1.5 rounded-lg bg-sky-700 text-white text-xs font-semibold shrink-0 disabled:opacity-50"
+            >
+              {startLinkedIn.isPending ? 'Redirecting…' : 'Connect'}
             </button>
           )}
         </div>
@@ -451,21 +535,23 @@ export default function ConnectionsPage() {
         />
       </div>
 
-      <div>
-        <h2 className="text-sm font-semibold mb-2">Coming soon</h2>
-        <div className="flex flex-wrap gap-2">
-          {(platformsData?.data?.platforms ?? [])
-            .filter((p) => p.status === 'coming_soon')
-            .map((p) => (
-              <span
-                key={p.id}
-                className="px-3 py-1.5 rounded-lg bg-gray-100 text-xs text-gray-500"
-              >
-                {p.name}
-              </span>
-            ))}
+      {(platformsData?.data?.platforms ?? []).some((p) => p.status === 'coming_soon') && (
+        <div>
+          <h2 className="text-sm font-semibold mb-2">Coming soon</h2>
+          <div className="flex flex-wrap gap-2">
+            {(platformsData?.data?.platforms ?? [])
+              .filter((p) => p.status === 'coming_soon')
+              .map((p) => (
+                <span
+                  key={p.id}
+                  className="px-3 py-1.5 rounded-lg bg-gray-100 text-xs text-gray-500"
+                >
+                  {p.name}
+                </span>
+              ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div>
         <h2 className="text-sm font-semibold mb-2">Active connections</h2>
@@ -492,6 +578,9 @@ export default function ConnectionsPage() {
                     <p className="text-xs text-gray-400 mt-0.5 font-mono">
                       {c.config.communityKeyPrefix}…
                     </p>
+                  )}
+                  {c.config?.linkedinEmail && (
+                    <p className="text-xs text-gray-400 mt-0.5">{c.config.linkedinEmail}</p>
                   )}
                   {c.lastError && <p className="text-xs text-red-500 mt-0.5">{c.lastError}</p>}
                 </div>

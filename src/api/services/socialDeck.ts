@@ -20,6 +20,9 @@ export type Connection = {
     ttfEmail?: string;
     ttfAuthorName?: string;
     communityKeyPrefix?: string;
+    linkedinProfileName?: string;
+    linkedinEmail?: string;
+    linkedinPersonUrn?: string;
     linkedAt?: string;
   };
   lastUsedAt?: string;
@@ -123,6 +126,13 @@ export function useConnectCommunity() {
     mutationFn: (body: { developerKey: string; name?: string }) =>
       api('/social-deck/connections/community', { method: 'POST', body: JSON.stringify(body) }),
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.connections }),
+  });
+}
+
+export function useStartLinkedInConnect() {
+  return useMutation({
+    mutationFn: () =>
+      api<{ success: boolean; data: { url: string } }>('/social-deck/connections/linkedin/start'),
   });
 }
 
