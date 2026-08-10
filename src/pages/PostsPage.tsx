@@ -63,17 +63,26 @@ export default function PostsPage() {
           {posts.map((post) => (
             <li key={post.id} className="rounded-xl border border-gray-200 bg-white p-4">
               <div className="flex items-start justify-between gap-3">
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="font-semibold text-sm">{post.title}</p>
                   <p className="text-xs text-gray-500 mt-1 line-clamp-2">{post.content}</p>
                 </div>
-                <span
-                  className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-medium capitalize ${
-                    STATUS_STYLE[post.status] ?? STATUS_STYLE.draft
-                  }`}
-                >
-                  {post.status}
-                </span>
+                <div className="flex items-start gap-2 shrink-0">
+                  {post.image ? (
+                    <img
+                      src={post.image}
+                      alt=""
+                      className="w-14 h-14 rounded-lg object-cover border border-gray-100"
+                    />
+                  ) : null}
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-medium capitalize ${
+                      STATUS_STYLE[post.status] ?? STATUS_STYLE.draft
+                    }`}
+                  >
+                    {post.status}
+                  </span>
+                </div>
               </div>
               {post.results?.length > 0 && (
                 <ul className="mt-2 space-y-1.5">

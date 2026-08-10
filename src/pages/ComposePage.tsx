@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'glintly-ui';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, X } from 'lucide-react';
 import {
   useConnections,
   useCreatePost,
@@ -32,10 +32,12 @@ export default function ComposePage() {
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [image, setImage] = useState('');
   const [category, setCategory] = useState('Technology');
   const [tags, setTags] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
   const [prompt, setPrompt] = useState('');
+  const [generateImage, setGenerateImage] = useState(false);
 
   const toggle = (id: string) => {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -47,7 +49,11 @@ export default function ComposePage() {
       return;
     }
     generateWithAi.mutate(
-      { prompt: prompt.trim(), connectionIds: selected },
+      {
+        prompt: prompt.trim(),
+        connectionIds: selected,
+        generateImage,
+      },
       {
         onSuccess: (res) => {
           const post = res.data.post;
@@ -55,10 +61,13 @@ export default function ComposePage() {
           setContent(post.content);
           setCategory(post.category);
           setTags(post.tags.join(', '));
-          toast.success('Draft generated — review and publish');
+          setImage(post.image || '');
+          toast.success(
+            post.image ? 'Draft + image generated — review and publish' : 'Draft generated — review and publish',
+          );
         },
         onError: (e: Error) => toast.error(e.message),
-      }
+      },
     );
   };
 
@@ -75,8 +84,12 @@ export default function ComposePage() {
       {
         title: title.trim(),
         content,
+        image: image.trim() || undefined,
         category,
-        tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
+        tags: tags
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
         connectionIds: selected,
         publish,
       },
@@ -86,12 +99,13 @@ export default function ComposePage() {
           if (publish) {
             setTitle('');
             setContent('');
+            setImage('');
             setTags('');
             setPrompt('');
           }
         },
         onError: (e: Error) => toast.error(e.message),
-      }
+      },
     );
   };
 
@@ -158,6 +172,17 @@ export default function ComposePage() {
             onChange={(e) => setPrompt(e.target.value)}
             className="w-full px-3 py-2 rounded-xl border border-violet-200 bg-white text-sm resize-y"
           />
+          <label className="flex items-start gap-2 text-xs text-violet-900 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={generateImage}
+              onChange={(e) => setGenerateImage(e.target.checked)}
+              className="mt-0.5 rounded border-violet-300"
+            />
+            <span>
+              Also generate an image (uses your OpenAI Images quota; billed to your OpenAI account)
+            </span>
+          </label>
           <button
             type="button"
             onClick={generate}
@@ -167,7 +192,7 @@ export default function ComposePage() {
             {generateWithAi.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Generating…
+                {generateImage ? 'Generating draft + image…' : 'Generating…'}
               </>
             ) : (
               <>
@@ -200,6 +225,21 @@ export default function ComposePage() {
         onChange={(e) => setContent(e.target.value)}
         className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm resize-y"
       />
+
+      {image ? (
+        <div className="relative rounded-xl border border-gray-200 overflow-hidden bg-gray-50">
+          <img src={image} alt="Post" className="w-full max-h-72 object-cover" />
+          <button
+            type="button"
+            onClick={() => setImage('')}
+            className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 text-gray-700 shadow hover:bg-white"
+            aria-label="Remove image"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      ) : null}
+
       <div className="grid sm:grid-cols-2 gap-3">
         <select
           value={category}

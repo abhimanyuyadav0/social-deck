@@ -82,6 +82,7 @@ export type GeneratedPost = {
   content: string;
   category: string;
   tags: string[];
+  image?: string;
 };
 
 export type AutoRunConfig = {
@@ -90,6 +91,7 @@ export type AutoRunConfig = {
   connectionIds: string[];
   topics: string[];
   promptHint: string;
+  generateImage?: boolean;
   nextRunAt?: string | null;
   lastRunAt?: string | null;
   lastError?: string;
@@ -186,7 +188,7 @@ export function useDisconnectAi() {
 
 export function useGenerateWithAi() {
   return useMutation({
-    mutationFn: (body: { prompt: string; connectionIds: string[] }) =>
+    mutationFn: (body: { prompt: string; connectionIds: string[]; generateImage?: boolean }) =>
       api<{ success: boolean; data: { post: GeneratedPost } }>('/social-deck/ai/generate', {
         method: 'POST',
         body: JSON.stringify(body),
@@ -200,6 +202,7 @@ export function useCreatePost() {
     mutationFn: (body: {
       title: string;
       content: string;
+      image?: string;
       category?: string;
       tags?: string[];
       connectionIds: string[];

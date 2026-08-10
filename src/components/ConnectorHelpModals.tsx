@@ -132,11 +132,13 @@ export function AiGuideContent() {
           voice, goals, and references (used for Compose and Auto Run).
         </li>
         <li>
-          In Compose, enter a prompt, select platforms, generate a draft, then publish.
+          In Compose, enter a prompt, optionally enable <strong>Also generate an image</strong>,
+          select platforms, generate a draft, then publish.
         </li>
         <li>
           Optional: use Auto Run to generate and publish on a schedule once AI + platforms are
-          connected.
+          connected. Enable <strong>Include AI image</strong> there if you want images on auto
+          posts.
         </li>
       </ol>
     </div>

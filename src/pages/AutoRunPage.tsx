@@ -54,6 +54,7 @@ export default function AutoRunPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [topicsText, setTopicsText] = useState('');
   const [promptHint, setPromptHint] = useState('');
+  const [generateImage, setGenerateImage] = useState(false);
 
   useEffect(() => {
     if (!auto) return;
@@ -62,6 +63,7 @@ export default function AutoRunPage() {
     setSelected(auto.connectionIds || []);
     setTopicsText((auto.topics || []).join('\n'));
     setPromptHint(auto.promptHint || '');
+    setGenerateImage(!!auto.generateImage);
   }, [auto]);
 
   const toggleConnection = (id: string) => {
@@ -85,6 +87,7 @@ export default function AutoRunPage() {
         connectionIds: selected,
         topicsText,
         promptHint,
+        generateImage,
       },
       {
         onSuccess: (res) => {
@@ -117,6 +120,7 @@ export default function AutoRunPage() {
         connectionIds: selected,
         topicsText,
         promptHint,
+        generateImage,
       },
       {
         onSuccess: () =>
@@ -277,6 +281,18 @@ export default function AutoRunPage() {
                 placeholder="e.g. Keep under 400 words, end with a question"
                 className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm resize-y"
               />
+            </label>
+            <label className="flex items-start gap-2 text-xs text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={generateImage}
+                onChange={(e) => setGenerateImage(e.target.checked)}
+                className="mt-0.5 rounded border-gray-300"
+              />
+              <span>
+                Include AI image with each auto post (OpenAI Images + Cloudinary; billed to your
+                OpenAI account)
+              </span>
             </label>
             <button
               type="button"

@@ -89,6 +89,10 @@ export default function DocsPage() {
               so generated drafts match your voice (used for Compose and Auto Run).
             </li>
             <li>
+              In Compose, optionally enable image generation (OpenAI Images; requires Cloudinary on
+              the API). Auto Run has the same toggle for scheduled posts.
+            </li>
+            <li>
               Use{' '}
               <Link to="/compose" className="text-purple-700 hover:underline">
                 Compose
