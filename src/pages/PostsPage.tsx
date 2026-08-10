@@ -12,6 +12,18 @@ const STATUS_STYLE: Record<string, string> = {
   publishing: 'bg-blue-100 text-blue-800',
 };
 
+function formatPostTime(iso?: string) {
+  if (!iso) return null;
+  try {
+    return new Date(iso).toLocaleString(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+  } catch {
+    return iso;
+  }
+}
+
 export default function PostsPage() {
   const { data, isLoading } = usePosts();
   const { data: connectionsData } = useConnections();
@@ -66,6 +78,12 @@ export default function PostsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-sm">{post.title}</p>
                   <p className="text-xs text-gray-500 mt-1 line-clamp-2">{post.content}</p>
+                  {formatPostTime(post.publishedAt || post.createdAt) && (
+                    <p className="text-[11px] text-gray-400 mt-1.5">
+                      {post.publishedAt ? 'Posted' : 'Created'}{' '}
+                      {formatPostTime(post.publishedAt || post.createdAt)}
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-start gap-2 shrink-0">
                   {post.image ? (
