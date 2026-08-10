@@ -139,7 +139,7 @@ export default function ComposePage() {
             {hasAiContext
               ? 'Uses your AI context and recent posts so drafts stay original (no duplicates).'
               : hasAi
-                ? 'Tip: add who you are and references in Connections → AI context for better drafts.'
+                ? 'Tip: add who you are and references in Auto Run → Your AI context for better drafts.'
                 : 'Select platforms before generating with AI so the draft matches each one.'}
           </p>
         </div>

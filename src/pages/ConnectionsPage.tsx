@@ -1,7 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { toast } from 'glintly-ui';
-import { Users, Trash2, X, ExternalLink, Key, Sparkles, Linkedin } from 'lucide-react';
+import {
+  Users,
+  Trash2,
+  X,
+  ExternalLink,
+  Key,
+  Sparkles,
+  Linkedin,
+  CircleAlert,
+} from 'lucide-react';
 import {
   useConnections,
   useConnectCommunity,
@@ -11,9 +20,114 @@ import {
   useAiConfig,
   useConnectAi,
   useDisconnectAi,
-  useSaveAiProfile,
-  type AiProfile,
 } from '@/api/services/socialDeck';
+import {
+  CommunityHelpModal,
+  LinkedInHelpModal,
+  AiHelpModal,
+} from '@/components/ConnectorHelpModals';
+
+function HowToConnectModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 space-y-5 max-h-[85dvh] overflow-y-auto">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="font-semibold text-gray-900">How to connect</h2>
+            <p className="text-xs text-gray-500 mt-1">
+              Each connector is set up once. After that, pick them in Compose to publish.
+            </p>
+          </div>
+          <button type="button" onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <ol className="space-y-4">
+          <li className="flex gap-3">
+            <span className="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+              <Users className="w-4 h-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900">Community</p>
+              <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                Sign in to Community → open{' '}
+                <a
+                  href="https://community.timetofuture.com/developer"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-purple-600 inline-flex items-center gap-0.5 hover:underline"
+                >
+                  Developer
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+                , create a key (<code className="text-purple-700">cm_...</code>), then paste it on
+                Connect Community.
+              </p>
+            </div>
+          </li>
+
+          <li className="flex gap-3">
+            <span className="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
+              <Linkedin className="w-4 h-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900">LinkedIn</p>
+              <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                Click Connect on LinkedIn. Approve Social Deck in the LinkedIn consent screen —
+                you&apos;ll return here when it&apos;s linked to your profile.
+              </p>
+            </div>
+          </li>
+
+          <li className="flex gap-3">
+            <span className="w-8 h-8 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center shrink-0">
+              <Sparkles className="w-4 h-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900">AI (OpenAI)</p>
+              <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                Create an API key at{' '}
+                <a
+                  href="https://platform.openai.com/api-keys"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-purple-600 inline-flex items-center gap-0.5 hover:underline"
+                >
+                  platform.openai.com
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+                , paste it under AI Assistant, then set Your AI context on Auto Run so drafts match
+                your voice.
+              </p>
+            </div>
+          </li>
+        </ol>
+
+        <p className="text-xs text-gray-500 leading-relaxed border-t border-gray-100 pt-4">
+          Tip: connect every platform you want to use, then in Compose select which ones to publish
+          to for each post. Full guides live on the{' '}
+          <Link to="/docs" className="text-purple-600 hover:underline" onClick={onClose}>
+            Docs
+          </Link>{' '}
+          page.
+        </p>
+
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-sm rounded-xl bg-gray-900 text-white font-semibold"
+          >
+            Got it
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function ConnectCommunityModal({
   open,
@@ -166,104 +280,6 @@ function ConnectAiModal({
   );
 }
 
-function AiContextForm({
-  initial,
-  onSave,
-  pending,
-}: {
-  initial: AiProfile;
-  onSave: (profile: Partial<AiProfile>) => void;
-  pending: boolean;
-}) {
-  const [aboutYou, setAboutYou] = useState(initial.aboutYou);
-  const [goals, setGoals] = useState(initial.goals);
-  const [references, setReferences] = useState(initial.references);
-  const [voice, setVoice] = useState(initial.voice);
-  const [audience, setAudience] = useState(initial.audience);
-
-  useEffect(() => {
-    setAboutYou(initial.aboutYou);
-    setGoals(initial.goals);
-    setReferences(initial.references);
-    setVoice(initial.voice);
-    setAudience(initial.audience);
-  }, [initial]);
-
-  return (
-    <div className="mt-4 pt-4 border-t border-violet-100 space-y-3">
-      <div>
-        <p className="text-sm font-semibold text-violet-900">Your AI context</p>
-        <p className="text-xs text-[var(--sd-muted)] mt-0.5">
-          Saved once — included in every generation so AI knows who you are, your goals, and what to
-          reference.
-        </p>
-      </div>
-      <div className="space-y-2">
-        <label className="block">
-          <span className="text-xs font-medium text-gray-600">Who you are</span>
-          <textarea
-            rows={2}
-            value={aboutYou}
-            onChange={(e) => setAboutYou(e.target.value)}
-            placeholder="e.g. Full-stack developer at Acme, 5 yrs React/Node, building in public…"
-            className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm resize-y"
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs font-medium text-gray-600">What you&apos;re trying to accomplish</span>
-          <textarea
-            rows={2}
-            value={goals}
-            onChange={(e) => setGoals(e.target.value)}
-            placeholder="e.g. Grow Community following, share learning notes, promote my SaaS…"
-            className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm resize-y"
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs font-medium text-gray-600">References</span>
-          <textarea
-            rows={3}
-            value={references}
-            onChange={(e) => setReferences(e.target.value)}
-            placeholder="Links, projects, stats, talking points — one per line&#10;https://myapp.com&#10;Shipped v2 last week with 40% faster builds"
-            className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm resize-y font-mono text-[13px]"
-          />
-        </label>
-        <div className="grid sm:grid-cols-2 gap-2">
-          <label className="block">
-            <span className="text-xs font-medium text-gray-600">Voice / tone</span>
-            <input
-              value={voice}
-              onChange={(e) => setVoice(e.target.value)}
-              placeholder="Friendly, direct, no jargon"
-              className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm"
-            />
-          </label>
-          <label className="block">
-            <span className="text-xs font-medium text-gray-600">Audience</span>
-            <input
-              value={audience}
-              onChange={(e) => setAudience(e.target.value)}
-              placeholder="Developers, founders, students…"
-              className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm"
-            />
-          </label>
-        </div>
-      </div>
-      <button
-        type="button"
-        disabled={pending}
-        onClick={() =>
-          onSave({ aboutYou, goals, references, voice, audience })
-        }
-        className="px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-semibold disabled:opacity-50"
-      >
-        {pending ? 'Saving…' : 'Save AI context'}
-      </button>
-    </div>
-  );
-}
-
 export default function ConnectionsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { data, isLoading } = useConnections();
@@ -274,16 +290,8 @@ export default function ConnectionsPage() {
   const { data: aiData } = useAiConfig();
   const connectAi = useConnectAi();
   const disconnectAi = useDisconnectAi();
-  const saveAiProfile = useSaveAiProfile();
 
   const ai = aiData?.data?.ai;
-  const profile = aiData?.data?.profile ?? {
-    aboutYou: '',
-    goals: '',
-    references: '',
-    voice: '',
-    audience: '',
-  };
   const hasAi = !!ai?.connected;
 
   const connections = data?.data?.connections ?? [];
@@ -294,6 +302,8 @@ export default function ConnectionsPage() {
 
   const [showCommunityModal, setShowCommunityModal] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
+  const [showHowTo, setShowHowTo] = useState(false);
+  const [helpTarget, setHelpTarget] = useState<'community' | 'linkedin' | 'ai' | null>(null);
 
   useEffect(() => {
     const status = searchParams.get('linkedin');
@@ -363,9 +373,27 @@ export default function ConnectionsPage() {
         onSubmit={connectWithAiKey}
         pending={connectAi.isPending}
       />
+      <HowToConnectModal open={showHowTo} onClose={() => setShowHowTo(false)} />
+      <CommunityHelpModal
+        open={helpTarget === 'community'}
+        onClose={() => setHelpTarget(null)}
+      />
+      <LinkedInHelpModal open={helpTarget === 'linkedin'} onClose={() => setHelpTarget(null)} />
+      <AiHelpModal open={helpTarget === 'ai'} onClose={() => setHelpTarget(null)} />
 
       <div>
-        <h1 className="sd-display text-xl font-bold">Connections</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="sd-display text-xl font-bold">Connections</h1>
+          <button
+            type="button"
+            onClick={() => setShowHowTo(true)}
+            className="p-1 rounded-full text-amber-600 hover:bg-amber-50 hover:text-amber-700 transition-colors"
+            aria-label="How to connect all platforms"
+            title="How to connect"
+          >
+            <CircleAlert className="w-5 h-5" />
+          </button>
+        </div>
         <p className="text-sm text-[var(--sd-muted)] mt-1">
           Connect platforms and AI — Community uses a developer key (
           <code className="text-purple-700">cm_...</code>), LinkedIn uses OAuth, AI uses your
@@ -379,7 +407,18 @@ export default function ConnectionsPage() {
             <Users className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm">Time To Future Community</p>
+            <div className="flex items-center gap-1.5">
+              <p className="font-semibold text-sm">Time To Future Community</p>
+              <button
+                type="button"
+                onClick={() => setHelpTarget('community')}
+                className="p-0.5 rounded-full text-amber-600 hover:bg-amber-50"
+                aria-label="How to connect Community"
+                title="How to connect Community"
+              >
+                <CircleAlert className="w-4 h-4" />
+              </button>
+            </div>
             <p className="text-xs text-[var(--sd-muted)]">
               Create a developer key in Community, then paste it here. Posts appear under that
               Community profile.
@@ -431,7 +470,18 @@ export default function ConnectionsPage() {
             <Linkedin className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm">LinkedIn</p>
+            <div className="flex items-center gap-1.5">
+              <p className="font-semibold text-sm">LinkedIn</p>
+              <button
+                type="button"
+                onClick={() => setHelpTarget('linkedin')}
+                className="p-0.5 rounded-full text-amber-600 hover:bg-amber-50"
+                aria-label="LinkedIn OAuth setup guide"
+                title="LinkedIn setup guide"
+              >
+                <CircleAlert className="w-4 h-4" />
+              </button>
+            </div>
             <p className="text-xs text-[var(--sd-muted)]">
               Authorize with LinkedIn to publish posts to your personal profile. Requires Sign In
               with LinkedIn (OIDC) and Share on LinkedIn on your LinkedIn app.
@@ -480,10 +530,24 @@ export default function ConnectionsPage() {
             <Sparkles className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm">AI Assistant (OpenAI)</p>
+            <div className="flex items-center gap-1.5">
+              <p className="font-semibold text-sm">AI Assistant (OpenAI)</p>
+              <button
+                type="button"
+                onClick={() => setHelpTarget('ai')}
+                className="p-0.5 rounded-full text-amber-600 hover:bg-amber-50"
+                aria-label="How to connect AI"
+                title="How to connect AI"
+              >
+                <CircleAlert className="w-4 h-4" />
+              </button>
+            </div>
             <p className="text-xs text-[var(--sd-muted)]">
-              Connect your OpenAI key to draft posts from a prompt in Compose — tailored to the
-              platforms you select.
+              Connect your OpenAI key to draft posts. Set Your AI context on{' '}
+              <Link to="/auto" className="text-purple-600 hover:underline">
+                Auto Run
+              </Link>{' '}
+              — it applies to Compose and Auto Run.
             </p>
             {hasAi && ai?.keyPrefix && (
               <p className="text-xs text-emerald-700 mt-1 font-mono">
@@ -523,16 +587,6 @@ export default function ConnectionsPage() {
             </button>
           )}
         </div>
-        <AiContextForm
-          initial={profile}
-          pending={saveAiProfile.isPending}
-          onSave={(body) =>
-            saveAiProfile.mutate(body, {
-              onSuccess: () => toast.success('AI context saved'),
-              onError: (e: Error) => toast.error(e.message),
-            })
-          }
-        />
       </div>
 
       {(platformsData?.data?.platforms ?? []).some((p) => p.status === 'coming_soon') && (

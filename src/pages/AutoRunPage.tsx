@@ -8,7 +8,9 @@ import {
   useRunAutoNow,
   useConnections,
   useAiConfig,
+  useSaveAiProfile,
 } from '@/api/services/socialDeck';
+import AiContextForm from '@/components/AiContextForm';
 
 function formatWhen(iso?: string | null) {
   if (!iso) return '—';
@@ -31,6 +33,7 @@ export default function AutoRunPage() {
   const { data: aiData } = useAiConfig();
   const updateAuto = useUpdateAutoRun();
   const runNow = useRunAutoNow();
+  const saveAiProfile = useSaveAiProfile();
 
   const auto = data?.data?.auto;
   const intervalOptions = data?.data?.intervalOptions ?? [1, 2, 3, 4, 6, 8, 12, 24];
@@ -38,6 +41,13 @@ export default function AutoRunPage() {
     (c) => c.status === 'connected',
   );
   const hasAi = !!aiData?.data?.ai?.connected;
+  const profile = aiData?.data?.profile ?? {
+    aboutYou: '',
+    goals: '',
+    references: '',
+    voice: '',
+    audience: '',
+  };
 
   const [enabled, setEnabled] = useState(false);
   const [intervalHours, setIntervalHours] = useState(24);
@@ -127,10 +137,21 @@ export default function AutoRunPage() {
           Auto Run
         </h1>
         <p className="text-sm text-[var(--sd-muted)] mt-1">
-          Fully automatic: AI generates a unique post and publishes it on a timer. Uses your AI
-          context and previous posts so content stays original.
+          Fully automatic: AI generates a unique post and publishes it on a timer. Edit Your AI
+          context here once — it applies to Auto Run and Compose.
         </p>
       </div>
+
+      <AiContextForm
+        initial={profile}
+        pending={saveAiProfile.isPending}
+        onSave={(body) =>
+          saveAiProfile.mutate(body, {
+            onSuccess: () => toast.success('AI context saved — used for Compose and Auto Run'),
+            onError: (e: Error) => toast.error(e.message),
+          })
+        }
+      />
 
       {isLoading ? (
         <p className="text-sm text-gray-400">Loading…</p>

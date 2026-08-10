@@ -9,6 +9,7 @@ import {
   LogOut,
   Share2,
   User,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -18,6 +19,7 @@ const nav = [
   { to: '/connections', label: 'Connections', icon: Link2 },
   { to: '/posts', label: 'Posts', icon: FileText },
   { to: '/auto', label: 'Auto Run', icon: Bot },
+  { to: '/docs', label: 'Docs', icon: BookOpen },
 ];
 
 export default function Layout() {
