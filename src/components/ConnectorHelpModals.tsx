@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { X, ExternalLink, Users, Linkedin, Sparkles } from 'lucide-react';
+import { X, ExternalLink, Users, Linkedin, Sparkles, Youtube } from 'lucide-react';
 
 export function DocLink({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -377,6 +377,97 @@ scope=openid profile email w_member_social`}</CodeBlock>
   );
 }
 
+export function YouTubeGuideContent() {
+  return (
+    <div className="space-y-5">
+      <div className="flex items-start gap-2 text-red-800 bg-red-50 rounded-xl px-3 py-2 text-xs">
+        <Youtube className="w-4 h-4 shrink-0 mt-0.5" />
+        <span>
+          End users only need to click <strong>Connect</strong> on YouTube. Publishing isn&apos;t
+          supported yet — YouTube requires an actual video file to post, and Social Deck only
+          generates text/image posts today. Connecting still links your channel for when that
+          lands.
+        </span>
+      </div>
+
+      <Section n={1} title="Create a Google Cloud project">
+        <p>
+          Go to the{' '}
+          <DocLink href="https://console.cloud.google.com/">Google Cloud Console</DocLink> and
+          create (or select) a project.
+        </p>
+      </Section>
+
+      <Section n={2} title="Enable the YouTube Data API v3">
+        <p>
+          In <strong>APIs &amp; Services → Library</strong>, search for and enable{' '}
+          <strong>YouTube Data API v3</strong>.
+        </p>
+      </Section>
+
+      <Section n={3} title="Configure the OAuth consent screen">
+        <p>
+          In <strong>APIs &amp; Services → OAuth consent screen</strong>, set up an external app
+          and add the readonly + upload scopes:
+        </p>
+        <CodeBlock>{`https://www.googleapis.com/auth/youtube.readonly
+https://www.googleapis.com/auth/youtube.upload`}</CodeBlock>
+      </Section>
+
+      <Section n={4} title="Create an OAuth 2.0 Client ID">
+        <p>
+          In <strong>APIs &amp; Services → Credentials</strong>, create an{' '}
+          <strong>OAuth client ID</strong> of type <strong>Web application</strong>, then add
+          these authorized redirect URIs:
+        </p>
+        <p className="font-medium text-gray-800">Production</p>
+        <CodeBlock>https://api.timetofuture.com/api/social-deck/connections/youtube/callback</CodeBlock>
+        <p className="font-medium text-gray-800">Local development</p>
+        <CodeBlock>http://localhost:5001/api/social-deck/connections/youtube/callback</CodeBlock>
+        <p>Copy the generated Client ID and Client Secret.</p>
+      </Section>
+
+      <Section n={5} title="Configure environment variables">
+        <p className="font-medium text-gray-800">Local</p>
+        <CodeBlock>{`YOUTUBE_CLIENT_ID=your_client_id
+YOUTUBE_CLIENT_SECRET=your_client_secret
+YOUTUBE_REDIRECT_URI=http://localhost:5001/api/social-deck/connections/youtube/callback`}</CodeBlock>
+        <p className="font-medium text-gray-800">Production</p>
+        <CodeBlock>{`YOUTUBE_CLIENT_ID=your_client_id
+YOUTUBE_CLIENT_SECRET=your_client_secret
+YOUTUBE_REDIRECT_URI=https://api.timetofuture.com/api/social-deck/connections/youtube/callback`}</CodeBlock>
+        <p className="text-amber-800 bg-amber-50 rounded-lg px-2 py-1.5">
+          Never expose <code>YOUTUBE_CLIENT_SECRET</code> in frontend code.
+        </p>
+      </Section>
+
+      <Section n={6} title="Connect as an end user">
+        <ol className="list-decimal pl-4 space-y-1">
+          <li>Open Social Deck → Connections.</li>
+          <li>
+            Click <strong>Connect</strong> on YouTube.
+          </li>
+          <li>Choose the Google account and approve access on the consent screen.</li>
+          <li>You&apos;ll return to Connections with your channel linked.</li>
+        </ol>
+      </Section>
+
+      <Section n={7} title="Official documentation">
+        <ul className="space-y-1.5">
+          <li>
+            <DocLink href="https://developers.google.com/youtube/v3">YouTube Data API v3</DocLink>
+          </li>
+          <li>
+            <DocLink href="https://developers.google.com/identity/protocols/oauth2/web-server">
+              Google OAuth 2.0 for Web Server Applications
+            </DocLink>
+          </li>
+        </ul>
+      </Section>
+    </div>
+  );
+}
+
 export function CommunityHelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <HelpShell
@@ -423,6 +514,20 @@ export function LinkedInHelpModal({ open, onClose }: { open: boolean; onClose: (
       subtitle="Time To Future — developer app configuration for Social Deck"
     >
       <LinkedInGuideContent />
+    </HelpShell>
+  );
+}
+
+export function YouTubeHelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <HelpShell
+      open={open}
+      onClose={onClose}
+      wide
+      title="YouTube OAuth 2.0 Setup"
+      subtitle="Time To Future — developer app configuration for Social Deck"
+    >
+      <YouTubeGuideContent />
     </HelpShell>
   );
 }

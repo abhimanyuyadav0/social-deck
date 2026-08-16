@@ -9,12 +9,14 @@ import {
   Key,
   Sparkles,
   Linkedin,
+  Youtube,
   CircleAlert,
 } from 'lucide-react';
 import {
   useConnections,
   useConnectCommunity,
   useStartLinkedInConnect,
+  useStartYouTubeConnect,
   useDisconnectConnection,
   usePlatforms,
   useAiConfig,
@@ -26,6 +28,7 @@ import {
 import {
   CommunityHelpModal,
   LinkedInHelpModal,
+  YouTubeHelpModal,
   AiHelpModal,
 } from '@/components/ConnectorHelpModals';
 
@@ -80,6 +83,19 @@ function HowToConnectModal({ open, onClose }: { open: boolean; onClose: () => vo
               <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
                 Click Connect on LinkedIn. Approve Social Deck in the LinkedIn consent screen —
                 you&apos;ll return here when it&apos;s linked to your profile.
+              </p>
+            </div>
+          </li>
+
+          <li className="flex gap-3">
+            <span className="w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+              <Youtube className="w-4 h-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900">YouTube</p>
+              <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                Click Connect on YouTube and approve access on Google&apos;s consent screen to link
+                your channel. Publishing isn&apos;t supported yet — it requires a video file.
               </p>
             </div>
           </li>
@@ -288,6 +304,7 @@ export default function ConnectionsPage() {
   const { data: platformsData } = usePlatforms();
   const connectCommunity = useConnectCommunity();
   const startLinkedIn = useStartLinkedInConnect();
+  const startYouTube = useStartYouTubeConnect();
   const disconnect = useDisconnectConnection();
   const { data: aiData } = useAiConfig();
   const connectAi = useConnectAi();
@@ -304,11 +321,15 @@ export default function ConnectionsPage() {
   const hasCommunity = communityConn?.status === 'connected';
   const linkedInConn = connections.find((c) => c.type === 'linkedin');
   const hasLinkedIn = linkedInConn?.status === 'connected';
+  const youtubeConn = connections.find((c) => c.type === 'youtube');
+  const hasYouTube = youtubeConn?.status === 'connected';
 
   const [showCommunityModal, setShowCommunityModal] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
   const [showHowTo, setShowHowTo] = useState(false);
-  const [helpTarget, setHelpTarget] = useState<'community' | 'linkedin' | 'ai' | null>(null);
+  const [helpTarget, setHelpTarget] = useState<'community' | 'linkedin' | 'youtube' | 'ai' | null>(
+    null,
+  );
 
   const toggleConnectionContext = (connectionId: string, contextId: string, currentIds: string[]) => {
     const nextIds = currentIds.includes(contextId)
@@ -330,6 +351,20 @@ export default function ConnectionsPage() {
     }
     const next = new URLSearchParams(searchParams);
     next.delete('linkedin');
+    next.delete('message');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
+    const status = searchParams.get('youtube');
+    if (!status) return;
+    if (status === 'connected') {
+      toast.success('YouTube connected');
+    } else if (status === 'error') {
+      toast.error(searchParams.get('message') || 'YouTube connect failed');
+    }
+    const next = new URLSearchParams(searchParams);
+    next.delete('youtube');
     next.delete('message');
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams]);
@@ -374,6 +409,20 @@ export default function ConnectionsPage() {
     });
   };
 
+  const connectYouTube = () => {
+    startYouTube.mutate(undefined, {
+      onSuccess: (res) => {
+        const url = res?.data?.url;
+        if (!url) {
+          toast.error('No YouTube authorize URL returned');
+          return;
+        }
+        window.location.href = url;
+      },
+      onError: (e: Error) => toast.error(e.message),
+    });
+  };
+
   return (
     <div className="max-w-2xl space-y-6">
       <ConnectCommunityModal
@@ -394,6 +443,7 @@ export default function ConnectionsPage() {
         onClose={() => setHelpTarget(null)}
       />
       <LinkedInHelpModal open={helpTarget === 'linkedin'} onClose={() => setHelpTarget(null)} />
+      <YouTubeHelpModal open={helpTarget === 'youtube'} onClose={() => setHelpTarget(null)} />
       <AiHelpModal open={helpTarget === 'ai'} onClose={() => setHelpTarget(null)} />
 
       <div>
@@ -411,8 +461,8 @@ export default function ConnectionsPage() {
         </div>
         <p className="text-sm text-[var(--sd-muted)] mt-1">
           Connect platforms and AI — Community uses a developer key (
-          <code className="text-purple-700">cm_...</code>), LinkedIn uses OAuth, AI uses your
-          OpenAI key.
+          <code className="text-purple-700">cm_...</code>), LinkedIn and YouTube use OAuth, AI
+          uses your OpenAI key.
         </p>
       </div>
 
@@ -534,6 +584,59 @@ export default function ConnectionsPage() {
               className="px-3 py-1.5 rounded-lg bg-sky-700 text-white text-xs font-semibold shrink-0 disabled:opacity-50"
             >
               {startLinkedIn.isPending ? 'Redirecting…' : 'Connect'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-[var(--sd-line)] bg-white p-4 space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-lg bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+            <Youtube className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <p className="font-semibold text-sm">YouTube</p>
+              <button
+                type="button"
+                onClick={() => setHelpTarget('youtube')}
+                className="p-0.5 rounded-full text-amber-600 hover:bg-amber-50"
+                aria-label="How to connect YouTube"
+                title="How to connect YouTube"
+              >
+                <CircleAlert className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-xs text-[var(--sd-muted)]">
+              Authorize with Google to link your channel. Publishing isn&apos;t supported yet —
+              YouTube requires a video file to post.
+            </p>
+            {hasYouTube && (
+              <p className="text-xs text-emerald-700 mt-1">
+                Linked as {youtubeConn?.config?.youtubeChannelTitle || 'YouTube'}
+              </p>
+            )}
+          </div>
+          {hasYouTube ? (
+            <div className="flex flex-col items-end gap-1 shrink-0">
+              <span className="text-xs text-emerald-600 font-medium">Connected</span>
+              <button
+                type="button"
+                onClick={connectYouTube}
+                disabled={startYouTube.isPending}
+                className="text-xs text-purple-600 hover:underline disabled:opacity-50"
+              >
+                {startYouTube.isPending ? 'Redirecting…' : 'Reconnect'}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={connectYouTube}
+              disabled={startYouTube.isPending}
+              className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold shrink-0 disabled:opacity-50"
+            >
+              {startYouTube.isPending ? 'Redirecting…' : 'Connect'}
             </button>
           )}
         </div>
