@@ -58,9 +58,10 @@ export function AuthShell({
       />
 
       <div className="relative z-10 min-h-screen grid lg:grid-cols-2">
-        {/* Brand panel */}
+        {/* Brand panel — always visible (stacks above the form on narrow screens) so the
+            app's purpose is explained regardless of viewport, not just on desktop. */}
         <aside
-          className={`hidden lg:flex flex-col justify-between p-10 xl:p-14 transition-all duration-700 ease-out ${
+          className={`flex flex-col justify-between gap-8 p-6 sm:p-10 xl:p-14 transition-all duration-700 ease-out ${
             ready ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
           }`}
         >
@@ -73,14 +74,15 @@ export function AuthShell({
             </span>
           </Link>
 
-          <div className="max-w-md space-y-8">
+          <div className="max-w-md space-y-6 lg:space-y-8">
             <div>
-              <p className="sd-display text-4xl xl:text-5xl font-bold leading-[1.1] text-[var(--sd-ink)]">
+              <p className="sd-display text-3xl sm:text-4xl xl:text-5xl font-bold leading-[1.1] text-[var(--sd-ink)]">
                 One place to compose.
                 <span className="block text-purple-600 mt-1">Everywhere you publish.</span>
               </p>
               <p className="mt-4 text-[var(--sd-muted)] text-base leading-relaxed">
-                Connect Community, draft with AI, and keep a steady posting rhythm — without
+                Social Deck is a Time To Future product that lets you connect your social and
+                Community accounts, draft posts with AI, and keep a steady posting rhythm — without
                 copy-pasting the same update across apps.
               </p>
             </div>
@@ -118,13 +120,6 @@ export function AuthShell({
             }`}
             style={{ transitionDelay: '80ms' }}
           >
-            <div className="lg:hidden text-center mb-8">
-              <div className="inline-flex w-12 h-12 rounded-2xl bg-purple-600 text-white items-center justify-center mb-4 shadow-lg shadow-purple-600/25">
-                <Share2 className="w-6 h-6" />
-              </div>
-              <p className="sd-display text-2xl font-bold text-[var(--sd-ink)]">Social Deck</p>
-            </div>
-
             <div className="mb-6">
               <h1 className="sd-display text-2xl sm:text-3xl font-bold text-[var(--sd-ink)] tracking-tight">
                 {title}
