@@ -153,7 +153,7 @@ export default function ComposePage() {
             {hasAiContext
               ? 'Uses your AI context and recent posts so drafts stay original (no duplicates).'
               : hasAi
-                ? 'Tip: add who you are and references in Auto Run → Your AI context for better drafts.'
+                ? 'Tip: add your AI briefing on Auto Run (who you are, topics, image style) for better drafts.'
                 : 'Select platforms before generating with AI so the draft matches each one.'}
           </p>
         </div>
@@ -180,7 +180,13 @@ export default function ComposePage() {
               className="mt-0.5 rounded border-violet-300"
             />
             <span>
-              Also generate an image (uses your OpenAI Images quota; billed to your OpenAI account)
+              Also generate an image
+              {aiData?.data?.profile?.imageStyle
+                ? ` in your saved style (“${aiData.data.profile.imageStyle.slice(0, 60)}${
+                    aiData.data.profile.imageStyle.length > 60 ? '…' : ''
+                  }”)`
+                : ''}{' '}
+              (uses your OpenAI Images quota). Set style on Auto Run → AI briefing.
             </span>
           </label>
           <button

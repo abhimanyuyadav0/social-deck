@@ -47,6 +47,7 @@ export default function AutoRunPage() {
     references: '',
     voice: '',
     audience: '',
+    imageStyle: '',
   };
 
   const [enabled, setEnabled] = useState(false);
@@ -141,20 +142,42 @@ export default function AutoRunPage() {
           Auto Run
         </h1>
         <p className="text-sm text-[var(--sd-muted)] mt-1">
-          Fully automatic: AI generates a unique post and publishes it on a timer. Edit Your AI
-          context here once — it applies to Auto Run and Compose.
+          Fill the AI briefing once. Auto Run and Compose both use it to write posts and images.
         </p>
       </div>
 
       <AiContextForm
         initial={profile}
-        pending={saveAiProfile.isPending}
-        onSave={(body) =>
-          saveAiProfile.mutate(body, {
-            onSuccess: () => toast.success('AI context saved — used for Compose and Auto Run'),
+        topicsText={topicsText}
+        promptHint={promptHint}
+        generateImage={generateImage}
+        pending={saveAiProfile.isPending || updateAuto.isPending}
+        onSave={(body) => {
+          const { topicsText: nextTopics, promptHint: nextHint, generateImage: nextImage, ...profileBody } =
+            body;
+          setTopicsText(nextTopics);
+          setPromptHint(nextHint);
+          setGenerateImage(nextImage);
+          saveAiProfile.mutate(profileBody, {
+            onSuccess: () => {
+              updateAuto.mutate(
+                {
+                  enabled,
+                  intervalHours,
+                  connectionIds: selected,
+                  topicsText: nextTopics,
+                  promptHint: nextHint,
+                  generateImage: nextImage,
+                },
+                {
+                  onSuccess: () => toast.success('AI briefing saved — used for Compose and Auto Run'),
+                  onError: (e: Error) => toast.error(e.message),
+                },
+              );
+            },
             onError: (e: Error) => toast.error(e.message),
-          })
-        }
+          });
+        }}
       />
 
       {isLoading ? (
@@ -260,47 +283,14 @@ export default function AutoRunPage() {
             )}
           </div>
 
-          <div className="rounded-xl border border-[var(--sd-line)] bg-white p-5 space-y-3">
-            <p className="font-semibold text-sm">Topics (optional)</p>
-            <p className="text-xs text-[var(--sd-muted)]">
-              One theme per line. Auto Run rotates through them so posts stay varied.
-            </p>
-            <textarea
-              rows={4}
-              value={topicsText}
-              onChange={(e) => setTopicsText(e.target.value)}
-              placeholder={'Developer productivity tips\nLessons from shipping features\nCommunity building'}
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm resize-y"
-            />
-            <label className="block">
-              <span className="text-xs font-medium text-gray-600">Standing instructions</span>
-              <textarea
-                rows={2}
-                value={promptHint}
-                onChange={(e) => setPromptHint(e.target.value)}
-                placeholder="e.g. Keep under 400 words, end with a question"
-                className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm resize-y"
-              />
-            </label>
-            <label className="flex items-start gap-2 text-xs text-gray-700 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={generateImage}
-                onChange={(e) => setGenerateImage(e.target.checked)}
-                className="mt-0.5 rounded border-gray-300"
-              />
-              <span>
-                Include AI image with each auto post (OpenAI Images + Cloudinary; billed to your
-                OpenAI account)
-              </span>
-            </label>
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={() => save()}
               disabled={updateAuto.isPending}
               className="px-4 py-2 rounded-xl bg-purple-600 text-white text-sm font-semibold disabled:opacity-50"
             >
-              {updateAuto.isPending ? 'Saving…' : 'Save settings'}
+              {updateAuto.isPending ? 'Saving…' : 'Save schedule'}
             </button>
           </div>
 

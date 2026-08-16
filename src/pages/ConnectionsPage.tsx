@@ -99,8 +99,8 @@ function HowToConnectModal({ open, onClose }: { open: boolean; onClose: () => vo
                   platform.openai.com
                   <ExternalLink className="w-3 h-3" />
                 </a>
-                , paste it under AI Assistant, then set Your AI context on Auto Run so drafts match
-                your voice.
+                , paste it under AI Assistant, then fill the AI briefing on Auto Run so drafts
+                match your voice and image style.
               </p>
             </div>
           </li>
@@ -543,11 +543,11 @@ export default function ConnectionsPage() {
               </button>
             </div>
             <p className="text-xs text-[var(--sd-muted)]">
-              Connect your OpenAI key to draft posts. Set Your AI context on{' '}
+              Connect your OpenAI key to draft posts. Fill the AI briefing on{' '}
               <Link to="/auto" className="text-purple-600 hover:underline">
                 Auto Run
               </Link>{' '}
-              — it applies to Compose and Auto Run.
+              (who you are, topics, image style) — it applies to Compose and Auto Run.
             </p>
             {hasAi && ai?.keyPrefix && (
               <p className="text-xs text-emerald-700 mt-1 font-mono">

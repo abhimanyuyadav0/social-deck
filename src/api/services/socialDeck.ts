@@ -73,6 +73,7 @@ export type AiProfile = {
   references: string;
   voice: string;
   audience: string;
+  imageStyle?: string;
   hasContext?: boolean;
   updatedAt?: string;
 };

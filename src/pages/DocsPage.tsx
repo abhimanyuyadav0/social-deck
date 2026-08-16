@@ -82,15 +82,15 @@ export default function DocsPage() {
               and set up each connector you need.
             </li>
             <li>
-              Optionally fill AI context on{' '}
+              Optionally fill the AI briefing on{' '}
               <Link to="/auto" className="text-purple-700 hover:underline">
                 Auto Run
               </Link>{' '}
-              so generated drafts match your voice (used for Compose and Auto Run).
+              (who you are, topics, image style) so drafts match you — used for Compose and Auto Run.
             </li>
             <li>
               In Compose, optionally enable image generation (OpenAI Images; requires Cloudinary on
-              the API). Auto Run has the same toggle for scheduled posts.
+              the API). Auto Run uses the same image setting from the briefing.
             </li>
             <li>
               Use{' '}

@@ -127,9 +127,9 @@ export function AiGuideContent() {
           <code className="text-purple-700">sk-...</code>).
         </li>
         <li>
-          Fill <strong className="font-semibold text-gray-800">Your AI context</strong> on{' '}
-          <strong className="font-semibold text-gray-800">Auto Run</strong> so drafts match your
-          voice, goals, and references (used for Compose and Auto Run).
+          Fill the <strong className="font-semibold text-gray-800">AI briefing</strong> on{' '}
+          <strong className="font-semibold text-gray-800">Auto Run</strong> — who you are, topics,
+          instructions, and image style (used for Compose and Auto Run).
         </li>
         <li>
           In Compose, enter a prompt, optionally enable <strong>Also generate an image</strong>,
@@ -137,8 +137,7 @@ export function AiGuideContent() {
         </li>
         <li>
           Optional: use Auto Run to generate and publish on a schedule once AI + platforms are
-          connected. Enable <strong>Include AI image</strong> there if you want images on auto
-          posts.
+          connected. Turn on image generation in the briefing if you want images on auto posts.
         </li>
       </ol>
     </div>
