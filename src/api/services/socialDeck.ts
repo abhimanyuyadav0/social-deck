@@ -14,6 +14,7 @@ export type Connection = {
   type: string;
   name: string;
   status: string;
+  contextIds: string[];
   config: {
     defaultCategory?: string;
     defaultTags?: string[];
@@ -55,6 +56,7 @@ const keys = {
   connections: ['social-deck', 'connections'] as const,
   posts: ['social-deck', 'posts'] as const,
   ai: ['social-deck', 'ai'] as const,
+  aiContexts: ['social-deck', 'ai-contexts'] as const,
   autoRun: ['social-deck', 'auto-run'] as const,
 };
 
@@ -67,7 +69,9 @@ export type AiConfig = {
   lastUsedAt?: string;
 };
 
-export type AiProfile = {
+export type AiContext = {
+  id: string;
+  name: string;
   aboutYou: string;
   goals: string;
   references: string;
@@ -75,6 +79,7 @@ export type AiProfile = {
   audience: string;
   imageStyle?: string;
   hasContext?: boolean;
+  connectionCount?: number;
   updatedAt?: string;
 };
 
@@ -87,9 +92,11 @@ export type GeneratedPost = {
 };
 
 export type AutoRunConfig = {
+  contextId: string;
+  contextName: string;
+  connectionCount: number;
   enabled: boolean;
   intervalHours: number;
-  connectionIds: string[];
   topics: string[];
   promptHint: string;
   generateImage?: boolean;
@@ -153,20 +160,77 @@ export function useDisconnectConnection() {
 export function useAiConfig() {
   return useQuery({
     queryKey: keys.ai,
-    queryFn: () =>
-      api<{ success: boolean; data: { ai: AiConfig; profile: AiProfile } }>('/social-deck/ai'),
+    queryFn: () => api<{ success: boolean; data: { ai: AiConfig } }>('/social-deck/ai'),
   });
 }
 
-export function useSaveAiProfile() {
+export function useAiContexts() {
+  return useQuery({
+    queryKey: keys.aiContexts,
+    queryFn: () =>
+      api<{ success: boolean; data: { contexts: AiContext[] } }>('/social-deck/ai/contexts'),
+  });
+}
+
+export function useCreateAiContext() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: Partial<AiProfile>) =>
-      api<{ success: boolean; data: { profile: AiProfile } }>('/social-deck/ai/profile', {
+    mutationFn: (body: Partial<AiContext> & { name: string }) =>
+      api<{ success: boolean; data: { context: AiContext } }>('/social-deck/ai/contexts', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.aiContexts });
+      qc.invalidateQueries({ queryKey: keys.autoRun });
+    },
+  });
+}
+
+export function useUpdateAiContext() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }: Partial<AiContext> & { id: string }) =>
+      api<{ success: boolean; data: { context: AiContext } }>(`/social-deck/ai/contexts/${id}`, {
         method: 'PUT',
         body: JSON.stringify(body),
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.ai }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.aiContexts });
+      qc.invalidateQueries({ queryKey: keys.autoRun });
+    },
+  });
+}
+
+export function useDeleteAiContext() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api<{ success: boolean; data: { unassignedConnections: number } }>(
+        `/social-deck/ai/contexts/${id}`,
+        { method: 'DELETE' },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.aiContexts });
+      qc.invalidateQueries({ queryKey: keys.connections });
+      qc.invalidateQueries({ queryKey: keys.autoRun });
+    },
+  });
+}
+
+export function useSetConnectionContexts() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, contextIds }: { id: string; contextIds: string[] }) =>
+      api<{ success: boolean; data: { connection: Connection } }>(
+        `/social-deck/connections/${id}/contexts`,
+        { method: 'PUT', body: JSON.stringify({ contextIds }) },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.connections });
+      qc.invalidateQueries({ queryKey: keys.aiContexts });
+      qc.invalidateQueries({ queryKey: keys.autoRun });
+    },
   });
 }
 
@@ -232,19 +296,19 @@ export function useAutoRun() {
     queryFn: () =>
       api<{
         success: boolean;
-        data: { auto: AutoRunConfig; intervalOptions: number[] };
+        data: { autoRuns: AutoRunConfig[]; intervalOptions: number[] };
       }>('/social-deck/auto-run'),
   });
 }
 
-export function useUpdateAutoRun() {
+export function useUpdateAutoRun(contextId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: Partial<AutoRunConfig> & { topicsText?: string }) =>
-      api<{ success: boolean; data: { auto: AutoRunConfig } }>('/social-deck/auto-run', {
-        method: 'PUT',
-        body: JSON.stringify(body),
-      }),
+      api<{ success: boolean; data: { auto: AutoRunConfig } }>(
+        `/social-deck/auto-run/${contextId}`,
+        { method: 'PUT', body: JSON.stringify(body) },
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.autoRun });
       qc.invalidateQueries({ queryKey: keys.posts });
@@ -252,14 +316,14 @@ export function useUpdateAutoRun() {
   });
 }
 
-export function useRunAutoNow() {
+export function useRunAutoNow(contextId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () =>
-      api<{ success: boolean; data: Record<string, unknown> }>('/social-deck/auto-run/run-now', {
-        method: 'POST',
-        body: JSON.stringify({}),
-      }),
+      api<{ success: boolean; data: Record<string, unknown> }>(
+        `/social-deck/auto-run/${contextId}/run-now`,
+        { method: 'POST', body: JSON.stringify({}) },
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.autoRun });
       qc.invalidateQueries({ queryKey: keys.posts });

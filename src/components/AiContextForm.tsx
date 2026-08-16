@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { AiProfile } from '@/api/services/socialDeck';
+import type { AiContext } from '@/api/services/socialDeck';
 
 const IMAGE_STYLES = [
   'Flat vector illustration',
@@ -10,61 +10,56 @@ const IMAGE_STYLES = [
   'Cinematic dark',
 ];
 
-export type AiBriefingValues = Partial<AiProfile> & {
-  topicsText: string;
-  promptHint: string;
-  generateImage: boolean;
-};
+export type AiContextValues = Partial<AiContext> & { name: string };
 
 export default function AiContextForm({
   initial,
-  topicsText: initialTopics = '',
-  promptHint: initialHint = '',
-  generateImage: initialGenerateImage = false,
   onSave,
+  onCancel,
   pending,
 }: {
-  initial: AiProfile;
-  topicsText?: string;
-  promptHint?: string;
-  generateImage?: boolean;
-  onSave: (values: AiBriefingValues) => void;
+  initial?: Partial<AiContext>;
+  onSave: (values: AiContextValues) => void;
+  onCancel?: () => void;
   pending: boolean;
 }) {
-  const [aboutYou, setAboutYou] = useState(initial.aboutYou);
-  const [goals, setGoals] = useState(initial.goals);
-  const [references, setReferences] = useState(initial.references);
-  const [voice, setVoice] = useState(initial.voice);
-  const [audience, setAudience] = useState(initial.audience);
-  const [imageStyle, setImageStyle] = useState(initial.imageStyle || '');
-  const [topicsText, setTopicsText] = useState(initialTopics);
-  const [promptHint, setPromptHint] = useState(initialHint);
-  const [generateImage, setGenerateImage] = useState(initialGenerateImage);
+  const [name, setName] = useState(initial?.name || '');
+  const [aboutYou, setAboutYou] = useState(initial?.aboutYou || '');
+  const [goals, setGoals] = useState(initial?.goals || '');
+  const [references, setReferences] = useState(initial?.references || '');
+  const [voice, setVoice] = useState(initial?.voice || '');
+  const [audience, setAudience] = useState(initial?.audience || '');
+  const [imageStyle, setImageStyle] = useState(initial?.imageStyle || '');
 
   useEffect(() => {
-    setAboutYou(initial.aboutYou);
-    setGoals(initial.goals);
-    setReferences(initial.references);
-    setVoice(initial.voice);
-    setAudience(initial.audience);
-    setImageStyle(initial.imageStyle || '');
+    setName(initial?.name || '');
+    setAboutYou(initial?.aboutYou || '');
+    setGoals(initial?.goals || '');
+    setReferences(initial?.references || '');
+    setVoice(initial?.voice || '');
+    setAudience(initial?.audience || '');
+    setImageStyle(initial?.imageStyle || '');
   }, [initial]);
-
-  useEffect(() => {
-    setTopicsText(initialTopics);
-    setPromptHint(initialHint);
-    setGenerateImage(initialGenerateImage);
-  }, [initialTopics, initialHint, initialGenerateImage]);
 
   return (
     <div className="rounded-xl border border-violet-200 bg-violet-50/40 p-5 space-y-4">
       <div>
-        <p className="text-sm font-semibold text-violet-900">AI briefing</p>
+        <p className="text-sm font-semibold text-violet-900">AI context</p>
         <p className="text-xs text-[var(--sd-muted)] mt-0.5">
-          One place for who you are, topics, instructions, and image style. AI uses this for Compose
-          and Auto Run.
+          Who you are, topics, and image style. Assign this context to one or more connections on
+          the Connections page.
         </p>
       </div>
+
+      <label className="block">
+        <span className="text-xs font-medium text-gray-600">Context name</span>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g. Personal brand, Company voice"
+          className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm"
+        />
+      </label>
 
       <div className="space-y-2">
         <label className="block">
@@ -121,32 +116,6 @@ export default function AiContextForm({
 
       <div className="space-y-2 pt-1 border-t border-violet-100">
         <label className="block">
-          <span className="text-xs font-medium text-gray-600">Topics</span>
-          <p className="text-[11px] text-[var(--sd-muted)] mt-0.5 mb-1">
-            One theme per line. Auto Run rotates through these so posts stay varied.
-          </p>
-          <textarea
-            rows={4}
-            value={topicsText}
-            onChange={(e) => setTopicsText(e.target.value)}
-            placeholder={'Developer productivity tips\nLessons from shipping features\nCommunity building'}
-            className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm resize-y"
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs font-medium text-gray-600">Standing instructions</span>
-          <textarea
-            rows={2}
-            value={promptHint}
-            onChange={(e) => setPromptHint(e.target.value)}
-            placeholder="e.g. Keep under 400 words, end with a question"
-            className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm resize-y"
-          />
-        </label>
-      </div>
-
-      <div className="space-y-2 pt-1 border-t border-violet-100">
-        <label className="block">
           <span className="text-xs font-medium text-gray-600">Image style</span>
           <p className="text-[11px] text-[var(--sd-muted)] mt-0.5 mb-1">
             Describe the look you want when AI generates an image.
@@ -177,40 +146,37 @@ export default function AiContextForm({
             className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm resize-y"
           />
         </label>
-        <label className="flex items-start gap-2 text-xs text-gray-700 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={generateImage}
-            onChange={(e) => setGenerateImage(e.target.checked)}
-            className="mt-0.5 rounded border-gray-300"
-          />
-          <span>
-            Include an AI image with each Auto Run post (OpenAI Images + Cloudinary; billed to your
-            OpenAI account). Compose can still toggle this per draft.
-          </span>
-        </label>
       </div>
 
-      <button
-        type="button"
-        disabled={pending}
-        onClick={() =>
-          onSave({
-            aboutYou,
-            goals,
-            references,
-            voice,
-            audience,
-            imageStyle,
-            topicsText,
-            promptHint,
-            generateImage,
-          })
-        }
-        className="px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-semibold disabled:opacity-50"
-      >
-        {pending ? 'Saving…' : 'Save AI briefing'}
-      </button>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          disabled={pending || !name.trim()}
+          onClick={() =>
+            onSave({
+              name: name.trim(),
+              aboutYou,
+              goals,
+              references,
+              voice,
+              audience,
+              imageStyle,
+            })
+          }
+          className="px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-semibold disabled:opacity-50"
+        >
+          {pending ? 'Saving…' : 'Save AI context'}
+        </button>
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+        )}
+      </div>
     </div>
   );
 }

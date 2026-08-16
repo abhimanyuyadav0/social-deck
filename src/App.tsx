@@ -11,6 +11,7 @@ import ComposePage from '@/pages/ComposePage';
 import ConnectionsPage from '@/pages/ConnectionsPage';
 import PostsPage from '@/pages/PostsPage';
 import AutoRunPage from '@/pages/AutoRunPage';
+import AutoRunDetailPage from '@/pages/AutoRunDetailPage';
 import DocsPage from '@/pages/DocsPage';
 
 export default function App() {
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="connections" element={<ConnectionsPage />} />
           <Route path="posts" element={<PostsPage />} />
           <Route path="auto" element={<AutoRunPage />} />
+          <Route path="auto/:contextId" element={<AutoRunDetailPage />} />
           <Route path="docs" element={<DocsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

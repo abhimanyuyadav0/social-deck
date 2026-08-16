@@ -20,6 +20,8 @@ import {
   useAiConfig,
   useConnectAi,
   useDisconnectAi,
+  useAiContexts,
+  useSetConnectionContexts,
 } from '@/api/services/socialDeck';
 import {
   CommunityHelpModal,
@@ -64,7 +66,7 @@ function HowToConnectModal({ open, onClose }: { open: boolean; onClose: () => vo
                   <ExternalLink className="w-3 h-3" />
                 </a>
                 , create a key (<code className="text-purple-700">cm_...</code>), then paste it on
-                Connect Community.
+                Connect Community. Assign an AI context to it once connected.
               </p>
             </div>
           </li>
@@ -99,8 +101,8 @@ function HowToConnectModal({ open, onClose }: { open: boolean; onClose: () => vo
                   platform.openai.com
                   <ExternalLink className="w-3 h-3" />
                 </a>
-                , paste it under AI Assistant, then fill the AI briefing on Auto Run so drafts
-                match your voice and image style.
+                , paste it under AI Assistant, then create an AI context on Auto Run and toggle it
+                on for your connections below so drafts match your voice and image style.
               </p>
             </div>
           </li>
@@ -290,9 +292,12 @@ export default function ConnectionsPage() {
   const { data: aiData } = useAiConfig();
   const connectAi = useConnectAi();
   const disconnectAi = useDisconnectAi();
+  const { data: contextsData } = useAiContexts();
+  const setConnectionContexts = useSetConnectionContexts();
 
   const ai = aiData?.data?.ai;
   const hasAi = !!ai?.connected;
+  const contexts = contextsData?.data?.contexts ?? [];
 
   const connections = data?.data?.connections ?? [];
   const communityConn = connections.find((c) => c.type === 'ttf_community');
@@ -304,6 +309,16 @@ export default function ConnectionsPage() {
   const [showAiModal, setShowAiModal] = useState(false);
   const [showHowTo, setShowHowTo] = useState(false);
   const [helpTarget, setHelpTarget] = useState<'community' | 'linkedin' | 'ai' | null>(null);
+
+  const toggleConnectionContext = (connectionId: string, contextId: string, currentIds: string[]) => {
+    const nextIds = currentIds.includes(contextId)
+      ? currentIds.filter((id) => id !== contextId)
+      : [...currentIds, contextId];
+    setConnectionContexts.mutate(
+      { id: connectionId, contextIds: nextIds },
+      { onError: (e: Error) => toast.error(e.message) },
+    );
+  };
 
   useEffect(() => {
     const status = searchParams.get('linkedin');
@@ -543,11 +558,12 @@ export default function ConnectionsPage() {
               </button>
             </div>
             <p className="text-xs text-[var(--sd-muted)]">
-              Connect your OpenAI key to draft posts. Fill the AI briefing on{' '}
+              Connect your OpenAI key to draft posts. Create AI contexts on{' '}
               <Link to="/auto" className="text-purple-600 hover:underline">
                 Auto Run
               </Link>{' '}
-              (who you are, topics, image style) — it applies to Compose and Auto Run.
+              (who you are, voice, image style) and toggle them on for connections below — a
+              connection can belong to more than one context.
             </p>
             {hasAi && ai?.keyPrefix && (
               <p className="text-xs text-emerald-700 mt-1 font-mono">
@@ -620,7 +636,7 @@ export default function ConnectionsPage() {
                 key={c.id}
                 className="flex items-center justify-between gap-3 p-3 rounded-xl border border-gray-200 bg-white text-sm"
               >
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium">{c.name}</p>
                   <p className="text-xs text-gray-500 capitalize">
                     {c.type.replace(/_/g, ' ')} · {c.status}
@@ -637,6 +653,38 @@ export default function ConnectionsPage() {
                     <p className="text-xs text-gray-400 mt-0.5">{c.config.linkedinEmail}</p>
                   )}
                   {c.lastError && <p className="text-xs text-red-500 mt-0.5">{c.lastError}</p>}
+                  {c.status === 'connected' && (
+                    <div className="mt-1.5">
+                      <p className="text-[11px] text-gray-500 mb-1">AI contexts</p>
+                      {contexts.length === 0 ? (
+                        <p className="text-[11px] text-gray-400">
+                          <Link to="/auto" className="text-purple-600 hover:underline">
+                            Create one on Auto Run
+                          </Link>
+                        </p>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {contexts.map((ctx) => {
+                            const active = c.contextIds.includes(ctx.id);
+                            return (
+                              <button
+                                key={ctx.id}
+                                type="button"
+                                onClick={() => toggleConnectionContext(c.id, ctx.id, c.contextIds)}
+                                className={`px-2 py-1 rounded-lg text-[11px] font-medium border transition-colors ${
+                                  active
+                                    ? 'bg-violet-600 text-white border-violet-600'
+                                    : 'bg-white border-gray-200 text-gray-600 hover:border-violet-300'
+                                }`}
+                              >
+                                {ctx.name}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 {c.status === 'connected' && (
                   <button
@@ -646,7 +694,7 @@ export default function ConnectionsPage() {
                         onSuccess: () => toast.success('Disconnected'),
                       })
                     }
-                    className="p-2 text-gray-400 hover:text-red-600"
+                    className="p-2 text-gray-400 hover:text-red-600 shrink-0"
                     aria-label="Disconnect"
                   >
                     <Trash2 className="w-4 h-4" />

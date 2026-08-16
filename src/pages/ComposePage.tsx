@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'glintly-ui';
 import { Sparkles, Loader2, X } from 'lucide-react';
@@ -6,6 +6,7 @@ import {
   useConnections,
   useCreatePost,
   useAiConfig,
+  useAiContexts,
   useGenerateWithAi,
 } from '@/api/services/socialDeck';
 
@@ -24,11 +25,12 @@ const CATEGORIES = [
 export default function ComposePage() {
   const { data } = useConnections();
   const { data: aiData } = useAiConfig();
+  const { data: contextsData } = useAiContexts();
   const createPost = useCreatePost();
   const generateWithAi = useGenerateWithAi();
   const connections = (data?.data?.connections ?? []).filter((c) => c.status === 'connected');
+  const contexts = contextsData?.data?.contexts ?? [];
   const hasAi = !!aiData?.data?.ai?.connected;
-  const hasAiContext = !!aiData?.data?.profile?.hasContext;
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -43,9 +45,34 @@ export default function ComposePage() {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
+  // Mirrors the backend's resolveContextForConnections: a connection can belong to several
+  // contexts, so the selected connections must share at least one context in common.
+  const sharedContextIds = useMemo(() => {
+    const withContexts = selected
+      .map((id) => connections.find((c) => c.id === id)?.contextIds ?? [])
+      .filter((ids) => ids.length > 0);
+    if (!withContexts.length) return [];
+    let shared = new Set(withContexts[0]);
+    for (let i = 1; i < withContexts.length && shared.size > 0; i++) {
+      const ids = new Set(withContexts[i]);
+      shared = new Set([...shared].filter((id) => ids.has(id)));
+    }
+    return [...shared].sort();
+  }, [selected, connections]);
+  const mixedContexts =
+    selected.some((id) => (connections.find((c) => c.id === id)?.contextIds.length ?? 0) > 0) &&
+    sharedContextIds.length === 0;
+  const resolvedContext = sharedContextIds.length > 0
+    ? contexts.find((c) => c.id === sharedContextIds[0])
+    : undefined;
+
   const generate = () => {
     if (!prompt.trim()) {
       toast.error('Enter a prompt for AI');
+      return;
+    }
+    if (mixedContexts) {
+      toast.error('Selected connections use different AI contexts');
       return;
     }
     generateWithAi.mutate(
@@ -150,11 +177,24 @@ export default function ComposePage() {
             ))}
           </div>
           <p className="text-[10px] text-[var(--sd-muted)]">
-            {hasAiContext
-              ? 'Uses your AI context and recent posts so drafts stay original (no duplicates).'
-              : hasAi
-                ? 'Tip: add your AI briefing on Auto Run (who you are, topics, image style) for better drafts.'
-                : 'Select platforms before generating with AI so the draft matches each one.'}
+            {mixedContexts ? (
+              <span className="text-amber-700">
+                Selected connections use different AI contexts — pick connections from a single
+                context to generate with AI, or generate separately for each.
+              </span>
+            ) : resolvedContext ? (
+              `Using context "${resolvedContext.name}" and your recent posts so drafts stay original (no duplicates).`
+            ) : hasAi ? (
+              <>
+                Tip: create an{' '}
+                <Link to="/contexts" className="text-purple-600 hover:underline">
+                  AI context
+                </Link>{' '}
+                (who you are, topics, image style) and assign it to a connection for better drafts.
+              </>
+            ) : (
+              'Select platforms before generating with AI so the draft matches each one.'
+            )}
           </p>
         </div>
       )}
@@ -181,18 +221,18 @@ export default function ComposePage() {
             />
             <span>
               Also generate an image
-              {aiData?.data?.profile?.imageStyle
-                ? ` in your saved style (“${aiData.data.profile.imageStyle.slice(0, 60)}${
-                    aiData.data.profile.imageStyle.length > 60 ? '…' : ''
+              {resolvedContext?.imageStyle
+                ? ` in your saved style (“${resolvedContext.imageStyle.slice(0, 60)}${
+                    resolvedContext.imageStyle.length > 60 ? '…' : ''
                   }”)`
                 : ''}{' '}
-              (uses your OpenAI Images quota). Set style on Auto Run → AI briefing.
+              (uses your OpenAI Images quota). Set style on the AI Contexts page.
             </span>
           </label>
           <button
             type="button"
             onClick={generate}
-            disabled={generateWithAi.isPending || !prompt.trim()}
+            disabled={generateWithAi.isPending || !prompt.trim() || mixedContexts}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 disabled:opacity-50"
           >
             {generateWithAi.isPending ? (
