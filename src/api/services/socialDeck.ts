@@ -26,6 +26,8 @@ export type Connection = {
     linkedinPersonUrn?: string;
     youtubeChannelId?: string;
     youtubeChannelTitle?: string;
+    instagramUserId?: string;
+    instagramUsername?: string;
     linkedAt?: string;
   };
   lastUsedAt?: string;
@@ -154,6 +156,13 @@ export function useStartYouTubeConnect() {
   return useMutation({
     mutationFn: () =>
       api<{ success: boolean; data: { url: string } }>('/social-deck/connections/youtube/start'),
+  });
+}
+
+export function useStartInstagramConnect() {
+  return useMutation({
+    mutationFn: () =>
+      api<{ success: boolean; data: { url: string } }>('/social-deck/connections/instagram/start'),
   });
 }
 

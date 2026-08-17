@@ -5,7 +5,7 @@ const features = [
   {
     icon: Layers,
     title: 'Connect platforms',
-    body: 'Link Community, LinkedIn, and YouTube once — publish under your own accounts from a single place.',
+    body: 'Link Community, LinkedIn, YouTube, and Instagram once — publish under your own accounts from a single place.',
   },
   {
     icon: Sparkles,
@@ -34,6 +34,11 @@ const dataUse = [
     platform: 'YouTube (Google)',
     reason:
       'OAuth reads your channel’s basic info so we can show which channel is connected. We also request upload permission for a publishing feature that isn’t live yet — today, we don’t upload or change anything on your channel.',
+  },
+  {
+    platform: 'Instagram',
+    reason:
+      'OAuth reads your Instagram Business/Creator account’s basic info and grants permission to publish image posts you create, on your behalf. We never post without you generating or writing the content first.',
   },
   {
     platform: 'OpenAI',
@@ -106,9 +111,9 @@ export default function LandingPage() {
               Social Deck is a product by Time To Future.
             </p>
             <p className="mt-6 text-base text-[var(--sd-muted)] leading-relaxed max-w-xl">
-              Connect Community, LinkedIn, and YouTube, draft posts with AI in your own voice, and
-              let Auto Run keep publishing on a schedule — so you stop copy-pasting the same
-              update across apps.
+              Connect Community, LinkedIn, YouTube, and Instagram, draft posts with AI in your own
+              voice, and let Auto Run keep publishing on a schedule — so you stop copy-pasting the
+              same update across apps.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link

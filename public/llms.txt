@@ -10,7 +10,7 @@
 
 ## Features
 
-- **Connect platforms**: Link Time To Future Community (developer key), LinkedIn (OAuth), and YouTube (OAuth, channel-connect only — publishing not yet supported) so posts go out under your own accounts.
+- **Connect platforms**: Link Time To Future Community (developer key), LinkedIn (OAuth), YouTube (OAuth, channel-connect only — publishing not yet supported), and Instagram (OAuth, publishes image posts to a Business/Creator account) so posts go out under your own accounts.
 - **AI contexts**: Named briefings (who you are, goals, voice, audience, references, image style) that can be assigned to one or more connections, so different accounts can post in different voices.
 - **Compose**: Write a post manually or generate a draft from a prompt with AI, tuned to the AI context assigned to the selected connections, with an optional AI-generated image.
 - **Auto Run**: Each AI context can run its own independent schedule — rotating through topics, generating a fresh post, and publishing automatically to every connection assigned to it.

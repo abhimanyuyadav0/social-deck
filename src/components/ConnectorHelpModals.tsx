@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { X, ExternalLink, Users, Linkedin, Sparkles, Youtube } from 'lucide-react';
+import { X, ExternalLink, Users, Linkedin, Sparkles, Youtube, Instagram } from 'lucide-react';
 
 export function DocLink({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -468,6 +468,109 @@ YOUTUBE_REDIRECT_URI=https://api.timetofuture.com/api/social-deck/connections/yo
   );
 }
 
+export function InstagramGuideContent() {
+  return (
+    <div className="space-y-5">
+      <div className="flex items-start gap-2 text-pink-800 bg-pink-50 rounded-xl px-3 py-2 text-xs">
+        <Instagram className="w-4 h-4 shrink-0 mt-0.5" />
+        <span>
+          End users only need to click <strong>Connect</strong> on Instagram and sign in with
+          Instagram — no Facebook Page required. It needs an Instagram{' '}
+          <strong>Business or Creator</strong> account — a personal account can&apos;t be
+          connected. Posts also need an image; Instagram&apos;s API doesn&apos;t support
+          text-only posts.
+        </span>
+      </div>
+
+      <Section n={1} title="Create a Meta app">
+        <p>
+          Go to the{' '}
+          <DocLink href="https://developers.facebook.com/apps">Meta for Developers</DocLink>{' '}
+          console and create an app (type: <strong>Business</strong>).
+        </p>
+      </Section>
+
+      <Section n={2} title="Add the Instagram use case">
+        <p>
+          Add the <strong>Manage messaging &amp; content on Instagram</strong> use case, then open
+          its <strong>API setup with Instagram login</strong> card (not the Facebook login one —
+          that variant requires a Facebook Page and isn&apos;t what Social Deck uses).
+        </p>
+      </Section>
+
+      <Section n={3} title="Configure the Instagram login redirect URI">
+        <p>
+          On the <strong>API setup with Instagram login</strong> screen, add these OAuth redirect
+          URIs:
+        </p>
+        <p className="font-medium text-gray-800">Production</p>
+        <CodeBlock>https://api.timetofuture.com/api/social-deck/connections/instagram/callback</CodeBlock>
+        <p className="font-medium text-gray-800">Local development</p>
+        <CodeBlock>http://localhost:5001/api/social-deck/connections/instagram/callback</CodeBlock>
+      </Section>
+
+      <Section n={4} title="Configure permissions">
+        <p>Request these scopes (Meta App Review is required for public use beyond test users):</p>
+        <CodeBlock>{`instagram_business_basic
+instagram_business_content_publish`}</CodeBlock>
+      </Section>
+
+      <Section n={5} title="Configure environment variables">
+        <p>
+          Use the <strong>Instagram App ID</strong> and <strong>Instagram App Secret</strong>{' '}
+          shown on the API setup with Instagram login screen (not the Meta App ID/Secret at the
+          top of the dashboard).
+        </p>
+        <p className="font-medium text-gray-800">Local</p>
+        <CodeBlock>{`INSTAGRAM_CLIENT_ID=your_instagram_app_id
+INSTAGRAM_CLIENT_SECRET=your_instagram_app_secret
+INSTAGRAM_REDIRECT_URI=http://localhost:5001/api/social-deck/connections/instagram/callback`}</CodeBlock>
+        <p className="font-medium text-gray-800">Production</p>
+        <CodeBlock>{`INSTAGRAM_CLIENT_ID=your_instagram_app_id
+INSTAGRAM_CLIENT_SECRET=your_instagram_app_secret
+INSTAGRAM_REDIRECT_URI=https://api.timetofuture.com/api/social-deck/connections/instagram/callback`}</CodeBlock>
+        <p className="text-amber-800 bg-amber-50 rounded-lg px-2 py-1.5">
+          Never expose <code>INSTAGRAM_CLIENT_SECRET</code> in frontend code.
+        </p>
+      </Section>
+
+      <Section n={6} title="Account requirements">
+        <p>
+          The connecting account must be an Instagram <strong>Business</strong> or{' '}
+          <strong>Creator</strong> account (Instagram app: Settings → Account type). No Facebook
+          Page or linkage is needed for this login variant.
+        </p>
+      </Section>
+
+      <Section n={7} title="Connect as an end user">
+        <ol className="list-decimal pl-4 space-y-1">
+          <li>Open Social Deck → Connections.</li>
+          <li>
+            Click <strong>Connect</strong> on Instagram.
+          </li>
+          <li>Sign in with Instagram and approve permissions on the consent screen.</li>
+          <li>You&apos;ll return to Connections with your Instagram account linked.</li>
+        </ol>
+      </Section>
+
+      <Section n={8} title="Official documentation">
+        <ul className="space-y-1.5">
+          <li>
+            <DocLink href="https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login">
+              Instagram API with Instagram Login
+            </DocLink>
+          </li>
+          <li>
+            <DocLink href="https://developers.facebook.com/docs/instagram-platform/content-publishing">
+              Content Publishing Guide
+            </DocLink>
+          </li>
+        </ul>
+      </Section>
+    </div>
+  );
+}
+
 export function CommunityHelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <HelpShell
@@ -528,6 +631,20 @@ export function YouTubeHelpModal({ open, onClose }: { open: boolean; onClose: ()
       subtitle="Time To Future — developer app configuration for Social Deck"
     >
       <YouTubeGuideContent />
+    </HelpShell>
+  );
+}
+
+export function InstagramHelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <HelpShell
+      open={open}
+      onClose={onClose}
+      wide
+      title="Instagram (Meta) Setup"
+      subtitle="Time To Future — developer app configuration for Social Deck"
+    >
+      <InstagramGuideContent />
     </HelpShell>
   );
 }
