@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { toast } from 'glintly-ui';
 import { Sparkles, Loader2, X } from 'lucide-react';
 import {
@@ -172,8 +173,11 @@ export default function ComposeSection({ connection }: { connection: Connection 
         </div>
       ) : (
         <div className="rounded-xl border border-dashed border-violet-200 p-4 text-sm text-[var(--sd-muted)]">
-          Connect OpenAI to generate posts from a prompt (Dashboard has no AI connector yet in
-          this new layout — write manually below for now).
+          Connect{' '}
+          <Link to="/" className="text-purple-600 hover:underline">
+            AI Assistant on the Dashboard
+          </Link>{' '}
+          to generate posts from a prompt, or write manually below.
         </div>
       )}
 

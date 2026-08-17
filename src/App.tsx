@@ -8,6 +8,8 @@ import SignupPage from '@/pages/SignupPage';
 import VerifyEmailPage from '@/pages/VerifyEmailPage';
 import DashboardPage from '@/pages/DashboardPage';
 import PlatformPage from '@/pages/PlatformPage';
+import InstagramAccountsPage from '@/pages/InstagramAccountsPage';
+import InstagramDetailPage from '@/pages/InstagramDetailPage';
 import DocsPage from '@/pages/DocsPage';
 
 export default function App() {
@@ -28,7 +30,8 @@ export default function App() {
         >
           <Route index element={<DashboardPage />} />
           <Route path="linkedin" element={<PlatformPage type="linkedin" />} />
-          <Route path="instagram" element={<PlatformPage type="instagram" />} />
+          <Route path="instagram" element={<InstagramAccountsPage />} />
+          <Route path="instagram/:connectionId" element={<InstagramDetailPage />} />
           <Route path="youtube" element={<PlatformPage type="youtube" />} />
           <Route path="community" element={<PlatformPage type="community" />} />
           <Route path="docs" element={<DocsPage />} />

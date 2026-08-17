@@ -5,6 +5,7 @@ import { useConnections, usePlatforms, usePosts } from '@/api/services/socialDec
 import DonutChart from '@/components/charts/DonutChart';
 import MiniBarChart from '@/components/charts/MiniBarChart';
 import HorizontalBarList from '@/components/charts/HorizontalBarList';
+import AiAssistantCard from '@/components/AiAssistantCard';
 
 /** Platform id (from constants.js's CONNECTION_TYPES) -> the platform's dedicated page route. */
 const PLATFORM_ROUTE: Record<string, string> = {
@@ -99,9 +100,11 @@ export default function DashboardPage() {
       <div>
         <h1 className="sd-display text-2xl font-bold">Social Deck</h1>
         <p className="text-xs text-[var(--sd-muted)] mt-1">
-          Connect and authorize each platform before publishing (Community today; LinkedIn & Instagram soon).
+          Pick a platform in the sidebar to connect it and manage its posts.
         </p>
       </div>
+
+      <AiAssistantCard />
 
       <div>
         <h2 className="text-sm font-semibold mb-3">Activity</h2>
