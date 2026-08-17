@@ -35,6 +35,51 @@ import {
   AiHelpModal,
 } from '@/components/ConnectorHelpModals';
 
+function ConfirmDisconnectModal({
+  open,
+  label,
+  onClose,
+  onConfirm,
+  pending,
+}: {
+  open: boolean;
+  label: string;
+  onClose: () => void;
+  onConfirm: () => void;
+  pending: boolean;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
+        <h2 className="font-semibold text-gray-900">Disconnect {label}?</h2>
+        <p className="text-sm text-gray-600 leading-relaxed">
+          Posts won&apos;t be able to publish here until you reconnect it. You can reconnect
+          anytime from this page.
+        </p>
+        <div className="flex gap-2 justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={onConfirm}
+            className="px-4 py-2 text-sm rounded-xl bg-red-600 text-white font-semibold disabled:opacity-50"
+          >
+            {pending ? 'Disconnecting…' : 'Disconnect'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function HowToConnectModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   if (!open) return null;
 
@@ -350,6 +395,9 @@ export default function ConnectionsPage() {
   const [helpTarget, setHelpTarget] = useState<
     'community' | 'linkedin' | 'youtube' | 'instagram' | 'ai' | null
   >(null);
+  const [pendingDisconnect, setPendingDisconnect] = useState<
+    { kind: 'connection'; id: string; label: string } | { kind: 'ai'; label: string } | null
+  >(null);
 
   const toggleConnectionContext = (connectionId: string, contextId: string, currentIds: string[]) => {
     const nextIds = currentIds.includes(contextId)
@@ -471,6 +519,32 @@ export default function ConnectionsPage() {
     });
   };
 
+  const disconnectPlatform = (id: string | undefined, label: string) => {
+    if (!id) return;
+    setPendingDisconnect({ kind: 'connection', id, label });
+  };
+
+  const confirmDisconnect = () => {
+    if (!pendingDisconnect) return;
+    if (pendingDisconnect.kind === 'ai') {
+      disconnectAi.mutate(undefined, {
+        onSuccess: () => {
+          toast.success('AI disconnected');
+          setPendingDisconnect(null);
+        },
+        onError: (e: Error) => toast.error(e.message),
+      });
+      return;
+    }
+    disconnect.mutate(pendingDisconnect.id, {
+      onSuccess: () => {
+        toast.success(`${pendingDisconnect.label} disconnected`);
+        setPendingDisconnect(null);
+      },
+      onError: (e: Error) => toast.error(e.message),
+    });
+  };
+
   return (
     <div className="max-w-2xl space-y-6">
       <ConnectCommunityModal
@@ -494,6 +568,13 @@ export default function ConnectionsPage() {
       <YouTubeHelpModal open={helpTarget === 'youtube'} onClose={() => setHelpTarget(null)} />
       <InstagramHelpModal open={helpTarget === 'instagram'} onClose={() => setHelpTarget(null)} />
       <AiHelpModal open={helpTarget === 'ai'} onClose={() => setHelpTarget(null)} />
+      <ConfirmDisconnectModal
+        open={!!pendingDisconnect}
+        label={pendingDisconnect?.label || ''}
+        onClose={() => setPendingDisconnect(null)}
+        onConfirm={confirmDisconnect}
+        pending={disconnect.isPending || disconnectAi.isPending}
+      />
 
       <div>
         <div className="flex items-center gap-2">
@@ -565,6 +646,13 @@ export default function ConnectionsPage() {
               >
                 Update key
               </button>
+              <button
+                type="button"
+                onClick={() => disconnectPlatform(communityConn?.id, 'Community')}
+                className="text-xs text-gray-500 hover:text-red-600"
+              >
+                Disconnect
+              </button>
             </div>
           ) : (
             <button
@@ -624,6 +712,13 @@ export default function ConnectionsPage() {
               >
                 {startLinkedIn.isPending ? 'Redirecting…' : 'Reconnect'}
               </button>
+              <button
+                type="button"
+                onClick={() => disconnectPlatform(linkedInConn?.id, 'LinkedIn')}
+                className="text-xs text-gray-500 hover:text-red-600"
+              >
+                Disconnect
+              </button>
             </div>
           ) : (
             <button
@@ -677,6 +772,13 @@ export default function ConnectionsPage() {
               >
                 {startYouTube.isPending ? 'Redirecting…' : 'Reconnect'}
               </button>
+              <button
+                type="button"
+                onClick={() => disconnectPlatform(youtubeConn?.id, 'YouTube')}
+                className="text-xs text-gray-500 hover:text-red-600"
+              >
+                Disconnect
+              </button>
             </div>
           ) : (
             <button
@@ -729,6 +831,13 @@ export default function ConnectionsPage() {
                 className="text-xs text-purple-600 hover:underline disabled:opacity-50"
               >
                 {startInstagram.isPending ? 'Redirecting…' : 'Reconnect'}
+              </button>
+              <button
+                type="button"
+                onClick={() => disconnectPlatform(instagramConn?.id, 'Instagram')}
+                className="text-xs text-gray-500 hover:text-red-600"
+              >
+                Disconnect
               </button>
             </div>
           ) : (
@@ -788,11 +897,7 @@ export default function ConnectionsPage() {
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  disconnectAi.mutate(undefined, {
-                    onSuccess: () => toast.success('AI disconnected'),
-                  })
-                }
+                onClick={() => setPendingDisconnect({ kind: 'ai', label: 'AI Assistant' })}
                 className="text-xs text-gray-500 hover:text-red-600"
               >
                 Disconnect
@@ -899,11 +1004,7 @@ export default function ConnectionsPage() {
                 {c.status === 'connected' && (
                   <button
                     type="button"
-                    onClick={() =>
-                      disconnect.mutate(c.id, {
-                        onSuccess: () => toast.success('Disconnected'),
-                      })
-                    }
+                    onClick={() => setPendingDisconnect({ kind: 'connection', id: c.id, label: c.name })}
                     className="p-2 text-gray-400 hover:text-red-600 shrink-0"
                     aria-label="Disconnect"
                   >
