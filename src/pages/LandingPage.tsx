@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Share2, Sparkles, Zap, Layers, ArrowRight } from 'lucide-react';
+import { Share2, Sparkles, Zap, Layers, ArrowRight, ShieldCheck } from 'lucide-react';
 
 const features = [
   {
@@ -16,6 +16,29 @@ const features = [
     icon: Zap,
     title: 'Auto Run',
     body: 'Give each AI context its own schedule so it keeps generating and posting on a timer, hands-free.',
+  },
+];
+
+const dataUse = [
+  {
+    platform: 'Time To Future Community',
+    reason:
+      'You paste a developer key you create yourself. We use it only to publish posts under your Community profile — nothing else.',
+  },
+  {
+    platform: 'LinkedIn',
+    reason:
+      'OAuth grants read of your basic profile (to show who you’re connected as) and permission to publish posts you write, on your behalf. We never post without you generating or writing the content first.',
+  },
+  {
+    platform: 'YouTube (Google)',
+    reason:
+      'OAuth reads your channel’s basic info so we can show which channel is connected. We also request upload permission for a publishing feature that isn’t live yet — today, we don’t upload or change anything on your channel.',
+  },
+  {
+    platform: 'OpenAI',
+    reason:
+      'You provide your own API key. We use it only to generate the draft text/images you ask for; billing stays on your OpenAI account and we never share the key.',
   },
 ];
 
@@ -72,17 +95,20 @@ export default function LandingPage() {
         {/* Hero */}
         <main className="max-w-5xl mx-auto px-4 sm:px-8 pt-10 pb-16 sm:pt-16 sm:pb-24">
           <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 bg-white/80 border border-purple-100 text-purple-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-600" />A Time To Future product
-            </span>
             <h1 className="sd-display text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.08] text-[var(--sd-ink)]">
-              One place to compose.
-              <span className="block text-purple-600 mt-1">Everywhere you publish.</span>
+              Social Deck
             </h1>
-            <p className="mt-6 text-base sm:text-lg text-[var(--sd-muted)] leading-relaxed max-w-xl">
-              Social Deck connects your Community, LinkedIn, and YouTube accounts, drafts posts
-              with AI in your own voice, and can keep publishing on a schedule — so you stop
-              copy-pasting the same update across apps.
+            <p className="mt-4 text-lg sm:text-xl font-medium text-[var(--sd-ink)]/90 leading-snug max-w-xl">
+              AI-powered social media management platform for creating, scheduling, and
+              publishing content across your connected social accounts.
+            </p>
+            <p className="mt-3 text-sm text-[var(--sd-muted)]">
+              Social Deck is a product by Time To Future.
+            </p>
+            <p className="mt-6 text-base text-[var(--sd-muted)] leading-relaxed max-w-xl">
+              Connect Community, LinkedIn, and YouTube, draft posts with AI in your own voice, and
+              let Auto Run keep publishing on a schedule — so you stop copy-pasting the same
+              update across apps.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
@@ -116,11 +142,55 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+
+          {/* Data use / permissions transparency */}
+          <div className="mt-16 sm:mt-20 rounded-2xl border border-purple-100/80 bg-white/80 backdrop-blur-sm p-6 sm:p-8">
+            <div className="flex items-center gap-2 mb-1">
+              <ShieldCheck className="w-5 h-5 text-purple-600" />
+              <h2 className="sd-display text-lg font-bold text-[var(--sd-ink)]">
+                Why we ask for access
+              </h2>
+            </div>
+            <p className="text-sm text-[var(--sd-muted)] mb-5 max-w-2xl">
+              Social Deck only requests the permissions each connected platform needs to publish
+              content you create — nothing is posted or changed on your accounts without your
+              action.
+            </p>
+            <dl className="grid sm:grid-cols-2 gap-4 sm:gap-5">
+              {dataUse.map((d) => (
+                <div key={d.platform}>
+                  <dt className="text-sm font-semibold text-[var(--sd-ink)]">{d.platform}</dt>
+                  <dd className="text-xs text-[var(--sd-muted)] mt-1 leading-relaxed">
+                    {d.reason}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
         </main>
 
         <footer className="max-w-5xl mx-auto px-4 sm:px-8 pb-10">
           <p className="text-xs text-[var(--sd-muted)]">
             A Time To Future product · Separate account from Community / HRMS
+          </p>
+          <p className="text-xs text-[var(--sd-muted)] mt-2">
+            <a
+              href="https://timetofuture.com/privacy-policy"
+              target="_blank"
+              rel="noreferrer"
+              className="text-purple-600 hover:underline"
+            >
+              Privacy Policy
+            </a>
+            {' · '}
+            <a
+              href="https://timetofuture.com/terms-of-service"
+              target="_blank"
+              rel="noreferrer"
+              className="text-purple-600 hover:underline"
+            >
+              Terms of Service
+            </a>
           </p>
         </footer>
       </div>
