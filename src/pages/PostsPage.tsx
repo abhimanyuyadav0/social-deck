@@ -86,13 +86,24 @@ export default function PostsPage() {
                   )}
                 </div>
                 <div className="flex items-start gap-2 shrink-0">
-                  {post.image ? (
-                    <img
-                      src={post.image}
-                      alt=""
-                      className="w-14 h-14 rounded-lg object-cover border border-gray-100"
-                    />
-                  ) : null}
+                  {post.images?.length > 0 && (
+                    <div className="flex -space-x-2">
+                      {post.images.slice(0, 3).map((url, i) => (
+                        <img
+                          key={`${url}-${i}`}
+                          src={url}
+                          alt=""
+                          className="w-14 h-14 rounded-lg object-cover border-2 border-white shadow-sm"
+                          style={{ zIndex: 3 - i }}
+                        />
+                      ))}
+                      {post.images.length > 3 && (
+                        <span className="w-14 h-14 rounded-lg bg-gray-800/80 text-white text-xs font-semibold flex items-center justify-center border-2 border-white">
+                          +{post.images.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <span
                     className={`text-[10px] px-2 py-0.5 rounded-full font-medium capitalize ${
                       STATUS_STYLE[post.status] ?? STATUS_STYLE.draft

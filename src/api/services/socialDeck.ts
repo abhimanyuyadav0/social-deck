@@ -38,7 +38,7 @@ export type SocialPost = {
   id: string;
   title: string;
   content: string;
-  image?: string;
+  images: string[];
   category: string;
   tags: string[];
   status: string;
@@ -92,7 +92,7 @@ export type GeneratedPost = {
   content: string;
   category: string;
   tags: string[];
-  image?: string;
+  images: string[];
 };
 
 export type AutoRunConfig = {
@@ -285,7 +285,7 @@ export function useCreatePost() {
     mutationFn: (body: {
       title: string;
       content: string;
-      image?: string;
+      images?: string[];
       category?: string;
       tags?: string[];
       connectionIds: string[];

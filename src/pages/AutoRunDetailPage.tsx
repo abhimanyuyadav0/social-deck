@@ -431,8 +431,8 @@ export default function AutoRunDetailPage() {
               className="mt-0.5 rounded border-gray-300"
             />
             <span>
-              Include an AI image with each Auto Run post (OpenAI Images + Cloudinary; billed to
-              your OpenAI account).
+              Include 1–4 AI images (picked at random) with each Auto Run post (OpenAI Images +
+              Cloudinary; billed to your OpenAI account).
             </span>
           </label>
 

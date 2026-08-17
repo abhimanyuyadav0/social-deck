@@ -34,12 +34,30 @@ export default function ComposePage() {
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [image, setImage] = useState('');
+  const [images, setImages] = useState<string[]>([]);
+  const [imageUrlInput, setImageUrlInput] = useState('');
   const [category, setCategory] = useState('Technology');
   const [tags, setTags] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
   const [prompt, setPrompt] = useState('');
   const [generateImage, setGenerateImage] = useState(false);
+
+  const MAX_MANUAL_IMAGES = 8;
+
+  const addImageUrl = () => {
+    const url = imageUrlInput.trim();
+    if (!url) return;
+    if (images.length >= MAX_MANUAL_IMAGES) {
+      toast.error(`Up to ${MAX_MANUAL_IMAGES} images per post`);
+      return;
+    }
+    setImages((prev) => [...prev, url]);
+    setImageUrlInput('');
+  };
+
+  const removeImageAt = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const toggle = (id: string) => {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -88,9 +106,11 @@ export default function ComposePage() {
           setContent(post.content);
           setCategory(post.category);
           setTags(post.tags.join(', '));
-          setImage(post.image || '');
+          setImages(post.images || []);
           toast.success(
-            post.image ? 'Draft + image generated — review and publish' : 'Draft generated — review and publish',
+            post.images?.length
+              ? `Draft + ${post.images.length} image${post.images.length === 1 ? '' : 's'} generated — review and publish`
+              : 'Draft generated — review and publish',
           );
         },
         onError: (e: Error) => toast.error(e.message),
@@ -111,7 +131,7 @@ export default function ComposePage() {
       {
         title: title.trim(),
         content,
-        image: image.trim() || undefined,
+        images,
         category,
         tags: tags
           .split(',')
@@ -126,7 +146,7 @@ export default function ComposePage() {
           if (publish) {
             setTitle('');
             setContent('');
-            setImage('');
+            setImages([]);
             setTags('');
             setPrompt('');
           }
@@ -220,7 +240,7 @@ export default function ComposePage() {
               className="mt-0.5 rounded border-violet-300"
             />
             <span>
-              Also generate an image
+              Also generate 1–4 images (picked at random)
               {resolvedContext?.imageStyle
                 ? ` in your saved style (“${resolvedContext.imageStyle.slice(0, 60)}${
                     resolvedContext.imageStyle.length > 60 ? '…' : ''
@@ -272,19 +292,51 @@ export default function ComposePage() {
         className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm resize-y"
       />
 
-      {image ? (
-        <div className="relative rounded-xl border border-gray-200 overflow-hidden bg-gray-50">
-          <img src={image} alt="Post" className="w-full max-h-72 object-cover" />
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <input
+            placeholder="Paste an image URL to add it manually"
+            value={imageUrlInput}
+            onChange={(e) => setImageUrlInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addImageUrl();
+              }
+            }}
+            className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm"
+          />
           <button
             type="button"
-            onClick={() => setImage('')}
-            className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 text-gray-700 shadow hover:bg-white"
-            aria-label="Remove image"
+            onClick={addImageUrl}
+            disabled={!imageUrlInput.trim()}
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
           >
-            <X className="w-4 h-4" />
+            Add
           </button>
         </div>
-      ) : null}
+
+        {images.length > 0 && (
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+            {images.map((url, i) => (
+              <div
+                key={`${url}-${i}`}
+                className="relative rounded-xl border border-gray-200 overflow-hidden bg-gray-50 aspect-square"
+              >
+                <img src={url} alt="" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removeImageAt(i)}
+                  className="absolute top-1 right-1 p-1 rounded-full bg-white/90 text-gray-700 shadow hover:bg-white"
+                  aria-label="Remove image"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="grid sm:grid-cols-2 gap-3">
         <select
