@@ -1,0 +1,25 @@
+# Social Deck
+
+> Social Deck is a Time To Future (TTF) product that lets you connect your social and Community accounts, draft posts with AI in your own voice, and publish on a schedule — one place to compose, everywhere you publish. Website: https://socialdeck.developerguilds.com.
+
+## Core Pages
+
+- [Home](https://socialdeck.developerguilds.com/): Explains what Social Deck does, its core features, and links to sign up or log in.
+- [Sign up](https://socialdeck.developerguilds.com/signup): Create a Social Deck account (separate from Community and HRMS accounts).
+- [Log in](https://socialdeck.developerguilds.com/login): Sign in to an existing Social Deck account.
+
+## Features
+
+- **Connect platforms**: Link Time To Future Community (developer key), LinkedIn (OAuth), and YouTube (OAuth, channel-connect only — publishing not yet supported) so posts go out under your own accounts.
+- **AI contexts**: Named briefings (who you are, goals, voice, audience, references, image style) that can be assigned to one or more connections, so different accounts can post in different voices.
+- **Compose**: Write a post manually or generate a draft from a prompt with AI, tuned to the AI context assigned to the selected connections, with an optional AI-generated image.
+- **Auto Run**: Each AI context can run its own independent schedule — rotating through topics, generating a fresh post, and publishing automatically to every connection assigned to it.
+
+## Access
+
+Everything beyond the home, sign up, and log in pages requires an authenticated Social Deck account — there is no public content to index past that point.
+
+## Machine-readable
+
+- [Sitemap](https://socialdeck.developerguilds.com/sitemap.xml): All indexable public URLs.
+- [Robots](https://socialdeck.developerguilds.com/robots.txt): Crawler access rules and sitemap reference.

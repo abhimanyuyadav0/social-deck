@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /$
+Allow: /login$
+Allow: /signup$
+Disallow: /
+
+# LLM / AI crawlers: site summary at /llms.txt
+
+Sitemap: https://socialdeck.developerguilds.com/sitemap.xml

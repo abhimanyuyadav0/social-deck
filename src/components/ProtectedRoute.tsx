@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import LandingPage from '@/pages/LandingPage';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -14,6 +15,12 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   }
 
   if (!user) {
+    // The home route ("/") shows the public landing page instead of bouncing straight to
+    // login, so anonymous visitors (and reviewers) see what Social Deck does. Every other
+    // protected path still redirects to login exactly as before.
+    if (location.pathname === '/') {
+      return <LandingPage />;
+    }
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
