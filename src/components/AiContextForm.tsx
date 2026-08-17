@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { AiContext } from '@/api/services/socialDeck';
+import AutoResizeTextarea from '@/components/AutoResizeTextarea';
 
 const IMAGE_STYLES = [
   'Flat vector illustration',
@@ -64,32 +65,30 @@ export default function AiContextForm({
       <div className="space-y-2">
         <label className="block">
           <span className="text-xs font-medium text-gray-600">Who you are</span>
-          <textarea
-            rows={2}
+          <AutoResizeTextarea
             value={aboutYou}
             onChange={(e) => setAboutYou(e.target.value)}
             placeholder="e.g. Full-stack developer at Acme, 5 yrs React/Node, building in public…"
-            className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm resize-y"
+            className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm"
           />
         </label>
         <label className="block">
           <span className="text-xs font-medium text-gray-600">What you&apos;re trying to accomplish</span>
-          <textarea
-            rows={2}
+          <AutoResizeTextarea
             value={goals}
             onChange={(e) => setGoals(e.target.value)}
             placeholder="e.g. Grow Community following, share learning notes, promote my SaaS…"
-            className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm resize-y"
+            className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm"
           />
         </label>
         <label className="block">
           <span className="text-xs font-medium text-gray-600">References</span>
-          <textarea
+          <AutoResizeTextarea
             rows={3}
             value={references}
             onChange={(e) => setReferences(e.target.value)}
             placeholder="Links, projects, stats, talking points — one per line&#10;https://myapp.com&#10;Shipped v2 last week with 40% faster builds"
-            className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm resize-y font-mono text-[13px]"
+            className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-mono text-[13px]"
           />
         </label>
         <div className="grid sm:grid-cols-2 gap-2">
@@ -138,12 +137,11 @@ export default function AiContextForm({
               </button>
             ))}
           </div>
-          <textarea
-            rows={2}
+          <AutoResizeTextarea
             value={imageStyle}
             onChange={(e) => setImageStyle(e.target.value)}
             placeholder="e.g. Flat vector illustration, purple and white, no people, clean workspace scene"
-            className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm resize-y"
+            className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm"
           />
         </label>
       </div>
