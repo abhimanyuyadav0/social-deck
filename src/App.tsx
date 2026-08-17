@@ -7,11 +7,7 @@ import LoginPage from '@/pages/LoginPage';
 import SignupPage from '@/pages/SignupPage';
 import VerifyEmailPage from '@/pages/VerifyEmailPage';
 import DashboardPage from '@/pages/DashboardPage';
-import ComposePage from '@/pages/ComposePage';
-import ConnectionsPage from '@/pages/ConnectionsPage';
-import PostsPage from '@/pages/PostsPage';
-import AutoRunPage from '@/pages/AutoRunPage';
-import AutoRunDetailPage from '@/pages/AutoRunDetailPage';
+import PlatformPage from '@/pages/PlatformPage';
 import DocsPage from '@/pages/DocsPage';
 
 export default function App() {
@@ -31,11 +27,10 @@ export default function App() {
           }
         >
           <Route index element={<DashboardPage />} />
-          <Route path="compose" element={<ComposePage />} />
-          <Route path="connections" element={<ConnectionsPage />} />
-          <Route path="posts" element={<PostsPage />} />
-          <Route path="auto" element={<AutoRunPage />} />
-          <Route path="auto/:contextId" element={<AutoRunDetailPage />} />
+          <Route path="linkedin" element={<PlatformPage type="linkedin" />} />
+          <Route path="instagram" element={<PlatformPage type="instagram" />} />
+          <Route path="youtube" element={<PlatformPage type="youtube" />} />
+          <Route path="community" element={<PlatformPage type="community" />} />
           <Route path="docs" element={<DocsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

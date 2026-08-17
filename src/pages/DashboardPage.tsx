@@ -1,10 +1,18 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { PenSquare, Link2, Users, Instagram, Linkedin, Bot } from 'lucide-react';
+import { Link2, Users, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { useConnections, usePlatforms, usePosts } from '@/api/services/socialDeck';
 import DonutChart from '@/components/charts/DonutChart';
 import MiniBarChart from '@/components/charts/MiniBarChart';
 import HorizontalBarList from '@/components/charts/HorizontalBarList';
+
+/** Platform id (from constants.js's CONNECTION_TYPES) -> the platform's dedicated page route. */
+const PLATFORM_ROUTE: Record<string, string> = {
+  ttf_community: '/community',
+  linkedin: '/linkedin',
+  youtube: '/youtube',
+  instagram: '/instagram',
+};
 
 const STATUS_COLORS: Record<string, string> = {
   published: '#059669',
@@ -40,6 +48,7 @@ export default function DashboardPage() {
     if (id.includes('community')) return Users;
     if (id.includes('linkedin')) return Linkedin;
     if (id.includes('instagram')) return Instagram;
+    if (id.includes('youtube')) return Youtube;
     return Link2;
   };
 
@@ -139,44 +148,27 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid sm:grid-cols-3 gap-3">
-        <Link
-          to="/compose"
-          className="rounded-xl border border-purple-200 bg-purple-50 p-4 hover:bg-purple-100 transition-colors"
-        >
-          <PenSquare className="w-5 h-5 text-purple-600 mb-2" />
-          <p className="font-semibold text-sm">Compose post</p>
-          <p className="text-xs text-[var(--sd-muted)] mt-1">Write once, publish everywhere</p>
-        </Link>
-        <Link
-          to="/connections"
-          className="rounded-xl border border-[var(--sd-line)] bg-white p-4 hover:border-purple-200 transition-colors"
-        >
-          <Link2 className="w-5 h-5 text-purple-600 mb-2" />
-          <p className="font-semibold text-sm">Connections</p>
-          <p className="text-xs text-[var(--sd-muted)] mt-1">Community & AI</p>
-        </Link>
-        <Link
-          to="/auto"
-          className="rounded-xl border border-[var(--sd-line)] bg-white p-4 hover:border-purple-200 transition-colors"
-        >
-          <Bot className="w-5 h-5 text-purple-600 mb-2" />
-          <p className="font-semibold text-sm">Auto Run</p>
-          <p className="text-xs text-[var(--sd-muted)] mt-1">Generate & post on a schedule</p>
-        </Link>
-      </div>
-
       <div>
         <h2 className="text-sm font-semibold mb-3">Platforms</h2>
         <div className="grid sm:grid-cols-2 gap-3">
           {platforms.map((p) => {
             const Icon = iconFor(p.id);
             const isSoon = p.status === 'coming_soon';
+            const isConnected = connected.some(
+              (c) => c.type === p.id || (p.id === 'ttf_community' && c.type === 'ttf_community'),
+            );
+            const route = PLATFORM_ROUTE[p.id];
             return (
-              <div
+              <Link
                 key={p.id}
-                className={`rounded-xl border p-4 flex gap-3 ${
-                  isSoon ? 'border-gray-200 bg-gray-50 opacity-80' : 'border-[var(--sd-line)] bg-white'
+                to={isSoon || !route ? '#' : route}
+                onClick={(e) => {
+                  if (isSoon || !route) e.preventDefault();
+                }}
+                className={`rounded-xl border p-4 flex gap-3 transition-colors ${
+                  isSoon
+                    ? 'border-gray-200 bg-gray-50 opacity-80 cursor-default'
+                    : 'border-[var(--sd-line)] bg-white hover:border-purple-300'
                 }`}
               >
                 <div className="w-10 h-10 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
@@ -185,15 +177,19 @@ export default function DashboardPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-semibold text-sm">{p.name}</p>
-                    {isSoon && (
+                    {isSoon ? (
                       <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800">
                         Coming soon
                       </span>
-                    )}
+                    ) : isConnected ? (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                        Connected
+                      </span>
+                    ) : null}
                   </div>
                   <p className="text-xs text-[var(--sd-muted)] mt-0.5">{p.description}</p>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

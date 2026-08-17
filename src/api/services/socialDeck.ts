@@ -14,7 +14,8 @@ export type Connection = {
   type: string;
   name: string;
   status: string;
-  contextIds: string[];
+  /** Each connection has exactly one dedicated AI context — null until a briefing is saved. */
+  contextId: string | null;
   config: {
     defaultCategory?: string;
     defaultTags?: string[];
@@ -62,6 +63,7 @@ const keys = {
   ai: ['social-deck', 'ai'] as const,
   aiContexts: ['social-deck', 'ai-contexts'] as const,
   autoRun: ['social-deck', 'auto-run'] as const,
+  videoSeries: ['social-deck', 'video-series'] as const,
 };
 
 export type AiConfig = {
@@ -236,13 +238,13 @@ export function useDeleteAiContext() {
   });
 }
 
-export function useSetConnectionContexts() {
+export function useSetConnectionContext() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, contextIds }: { id: string; contextIds: string[] }) =>
+    mutationFn: ({ id, contextId }: { id: string; contextId: string | null }) =>
       api<{ success: boolean; data: { connection: Connection } }>(
-        `/social-deck/connections/${id}/contexts`,
-        { method: 'PUT', body: JSON.stringify({ contextIds }) },
+        `/social-deck/connections/${id}/context`,
+        { method: 'PUT', body: JSON.stringify({ contextId }) },
       ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.connections });
@@ -322,10 +324,13 @@ export function useAutoRun() {
   });
 }
 
-export function useUpdateAutoRun(contextId: string) {
+export function useUpdateAutoRun() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: Partial<AutoRunConfig> & { topicsText?: string }) =>
+    mutationFn: ({
+      contextId,
+      ...body
+    }: Partial<AutoRunConfig> & { topicsText?: string; contextId: string }) =>
       api<{ success: boolean; data: { auto: AutoRunConfig } }>(
         `/social-deck/auto-run/${contextId}`,
         { method: 'PUT', body: JSON.stringify(body) },
@@ -337,10 +342,10 @@ export function useUpdateAutoRun(contextId: string) {
   });
 }
 
-export function useRunAutoNow(contextId: string) {
+export function useRunAutoNow() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () =>
+    mutationFn: (contextId: string) =>
       api<{ success: boolean; data: Record<string, unknown> }>(
         `/social-deck/auto-run/${contextId}/run-now`,
         { method: 'POST', body: JSON.stringify({}) },
@@ -349,5 +354,115 @@ export function useRunAutoNow(contextId: string) {
       qc.invalidateQueries({ queryKey: keys.autoRun });
       qc.invalidateQueries({ queryKey: keys.posts });
     },
+  });
+}
+
+export type VideoSeriesPart = {
+  order: number;
+  videoUrl: string;
+  status: 'pending' | 'posted' | 'failed';
+  externalId: string;
+  postedAt?: string;
+  error: string;
+};
+
+export type VideoSeries = {
+  id: string;
+  connectionId: string;
+  caption: string;
+  sourceVideoUrl: string;
+  parts: VideoSeriesPart[];
+  intervalMinutes: number;
+  segmentSeconds: number;
+  status:
+    | 'scheduled'
+    | 'running'
+    | 'paused'
+    | 'completed'
+    | 'cleaning_up'
+    | 'cleaned_up'
+    | 'failed';
+  currentPartIndex: number;
+  nextPostAt?: string | null;
+  lastError: string;
+  createdAt: string;
+};
+
+export function useVideoSeriesList() {
+  return useQuery({
+    queryKey: keys.videoSeries,
+    queryFn: () =>
+      api<{ success: boolean; data: { series: VideoSeries[] } }>('/social-deck/video-series'),
+    refetchInterval: 60_000,
+  });
+}
+
+export function useCreateVideoSeries() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: {
+      video: File;
+      connectionId: string;
+      caption: string;
+      intervalMinutes: number;
+      segmentSeconds: number;
+    }) => {
+      const form = new FormData();
+      form.append('video', body.video);
+      form.append('connectionId', body.connectionId);
+      form.append('caption', body.caption);
+      form.append('intervalMinutes', String(body.intervalMinutes));
+      form.append('segmentSeconds', String(body.segmentSeconds));
+      return api<{ success: boolean; data: { series: VideoSeries } }>('/social-deck/video-series', {
+        method: 'POST',
+        body: form,
+      });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.videoSeries }),
+  });
+}
+
+export function usePauseVideoSeries() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api<{ success: boolean; data: { series: VideoSeries } }>(
+        `/social-deck/video-series/${id}/pause`,
+        { method: 'POST', body: JSON.stringify({}) },
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.videoSeries }),
+  });
+}
+
+export function useResumeVideoSeries() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api<{ success: boolean; data: { series: VideoSeries } }>(
+        `/social-deck/video-series/${id}/resume`,
+        { method: 'POST', body: JSON.stringify({}) },
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.videoSeries }),
+  });
+}
+
+export function useDeletePostedContent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api<{ success: boolean; data: { series: VideoSeries } }>(
+        `/social-deck/video-series/${id}/delete-posts`,
+        { method: 'POST', body: JSON.stringify({}) },
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.videoSeries }),
+  });
+}
+
+export function useDeleteVideoSeriesRecord() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api(`/social-deck/video-series/${id}`, { method: 'DELETE' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.videoSeries }),
   });
 }

@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
-  PenSquare,
-  Link2,
-  FileText,
-  Bot,
+  Linkedin,
+  Instagram,
+  Youtube,
+  Users,
   LogOut,
   Share2,
   User,
@@ -17,10 +17,10 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const nav = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/compose', label: 'Compose', icon: PenSquare },
-  { to: '/connections', label: 'Connections', icon: Link2 },
-  { to: '/posts', label: 'Posts', icon: FileText },
-  { to: '/auto', label: 'Auto Run', icon: Bot },
+  { to: '/linkedin', label: 'LinkedIn', icon: Linkedin },
+  { to: '/instagram', label: 'Instagram', icon: Instagram },
+  { to: '/youtube', label: 'YouTube', icon: Youtube },
+  { to: '/community', label: 'Community', icon: Users },
   { to: '/docs', label: 'Docs', icon: BookOpen },
 ];
 

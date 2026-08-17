@@ -17,16 +17,19 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   const url = path.startsWith('http')
     ? path
     : `${baseUrl.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const storedToken = getStoredToken();
   const authValue = storedToken && shouldEncrypt() ? base64urlEncode(storedToken) : storedToken;
   const headers: HeadersInit = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(options.headers as Record<string, string>),
   };
   if (authValue) (headers as Record<string, string>)['Authorization'] = `Bearer ${authValue}`;
 
   let body = options.body;
-  if (shouldEncrypt()) {
+  // FormData (file uploads) can't be JSON-stringified or encrypted — send as-is and let the
+  // browser set the multipart Content-Type/boundary itself.
+  if (shouldEncrypt() && !isFormData) {
     (headers as Record<string, string>)['x-payload-encrypted'] = 'true';
     if (body && typeof body === 'string') {
       body = JSON.stringify({ e: await encrypt(body) });
