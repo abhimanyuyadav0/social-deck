@@ -34,7 +34,7 @@ export default function AutoRunPage() {
   };
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-6xl space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="sd-display text-xl font-bold flex items-center gap-2">

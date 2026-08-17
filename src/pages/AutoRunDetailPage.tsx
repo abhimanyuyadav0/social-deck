@@ -166,7 +166,7 @@ export default function AutoRunDetailPage() {
 
   if (!auto) {
     return (
-      <div className="max-w-2xl space-y-4">
+      <div className="max-w-6xl space-y-4">
         <Link to="/auto" className="inline-flex items-center gap-1 text-sm text-purple-600 hover:underline">
           <ArrowLeft className="w-4 h-4" />
           Back to Auto Run
@@ -230,7 +230,7 @@ export default function AutoRunDetailPage() {
   };
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="max-w-6xl space-y-6">
       <ConfirmDeleteModal
         open={showDelete}
         contextName={auto.contextName}
@@ -295,7 +295,7 @@ export default function AutoRunDetailPage() {
               .
             </p>
           ) : (
-            <ul className="grid grid-cols-2 gap-1.5">
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
               {connections.map((c) => {
                 const active = c.contextIds.includes(contextId);
                 return (

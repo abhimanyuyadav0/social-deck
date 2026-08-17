@@ -3,7 +3,6 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { toast } from 'glintly-ui';
 import {
   Users,
-  Trash2,
   X,
   ExternalLink,
   Key,
@@ -24,8 +23,6 @@ import {
   useAiConfig,
   useConnectAi,
   useDisconnectAi,
-  useAiContexts,
-  useSetConnectionContexts,
 } from '@/api/services/socialDeck';
 import {
   CommunityHelpModal,
@@ -362,7 +359,7 @@ function ConnectAiModal({
 
 export default function ConnectionsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { data, isLoading } = useConnections();
+  const { data } = useConnections();
   const { data: platformsData } = usePlatforms();
   const connectCommunity = useConnectCommunity();
   const startLinkedIn = useStartLinkedInConnect();
@@ -372,12 +369,9 @@ export default function ConnectionsPage() {
   const { data: aiData } = useAiConfig();
   const connectAi = useConnectAi();
   const disconnectAi = useDisconnectAi();
-  const { data: contextsData } = useAiContexts();
-  const setConnectionContexts = useSetConnectionContexts();
 
   const ai = aiData?.data?.ai;
   const hasAi = !!ai?.connected;
-  const contexts = contextsData?.data?.contexts ?? [];
 
   const connections = data?.data?.connections ?? [];
   const communityConn = connections.find((c) => c.type === 'ttf_community');
@@ -398,16 +392,6 @@ export default function ConnectionsPage() {
   const [pendingDisconnect, setPendingDisconnect] = useState<
     { kind: 'connection'; id: string; label: string } | { kind: 'ai'; label: string } | null
   >(null);
-
-  const toggleConnectionContext = (connectionId: string, contextId: string, currentIds: string[]) => {
-    const nextIds = currentIds.includes(contextId)
-      ? currentIds.filter((id) => id !== contextId)
-      : [...currentIds, contextId];
-    setConnectionContexts.mutate(
-      { id: connectionId, contextIds: nextIds },
-      { onError: (e: Error) => toast.error(e.message) },
-    );
-  };
 
   useEffect(() => {
     const status = searchParams.get('linkedin');
@@ -546,7 +530,7 @@ export default function ConnectionsPage() {
   };
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-6xl space-y-6">
       <ConnectCommunityModal
         open={showCommunityModal}
         onClose={() => setShowCommunityModal(false)}
@@ -596,6 +580,7 @@ export default function ConnectionsPage() {
         </p>
       </div>
 
+      <div className="grid sm:grid-cols-2 gap-4">
       <div className="rounded-xl border border-[var(--sd-line)] bg-white p-4 space-y-3">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
@@ -914,6 +899,7 @@ export default function ConnectionsPage() {
           )}
         </div>
       </div>
+      </div>
 
       {(platformsData?.data?.platforms ?? []).some((p) => p.status === 'coming_soon') && (
         <div>
@@ -933,89 +919,6 @@ export default function ConnectionsPage() {
         </div>
       )}
 
-      <div>
-        <h2 className="text-sm font-semibold mb-2">Active connections</h2>
-        {isLoading ? (
-          <p className="text-sm text-gray-400">Loading…</p>
-        ) : connections.length === 0 ? (
-          <p className="text-sm text-gray-400">No connections yet.</p>
-        ) : (
-          <ul className="space-y-2">
-            {connections.map((c) => (
-              <li
-                key={c.id}
-                className="flex items-center justify-between gap-3 p-3 rounded-xl border border-gray-200 bg-white text-sm"
-              >
-                <div className="min-w-0">
-                  <p className="font-medium">{c.name}</p>
-                  <p className="text-xs text-gray-500 capitalize">
-                    {c.type.replace(/_/g, ' ')} · {c.status}
-                  </p>
-                  {c.config?.ttfEmail && (
-                    <p className="text-xs text-gray-400 mt-0.5">{c.config.ttfEmail}</p>
-                  )}
-                  {c.config?.communityKeyPrefix && (
-                    <p className="text-xs text-gray-400 mt-0.5 font-mono">
-                      {c.config.communityKeyPrefix}…
-                    </p>
-                  )}
-                  {c.config?.linkedinEmail && (
-                    <p className="text-xs text-gray-400 mt-0.5">{c.config.linkedinEmail}</p>
-                  )}
-                  {c.config?.instagramUsername && (
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      @{c.config.instagramUsername}
-                    </p>
-                  )}
-                  {c.lastError && <p className="text-xs text-red-500 mt-0.5">{c.lastError}</p>}
-                  {c.status === 'connected' && (
-                    <div className="mt-1.5">
-                      <p className="text-[11px] text-gray-500 mb-1">AI contexts</p>
-                      {contexts.length === 0 ? (
-                        <p className="text-[11px] text-gray-400">
-                          <Link to="/auto" className="text-purple-600 hover:underline">
-                            Create one on Auto Run
-                          </Link>
-                        </p>
-                      ) : (
-                        <div className="flex flex-wrap gap-1">
-                          {contexts.map((ctx) => {
-                            const active = c.contextIds.includes(ctx.id);
-                            return (
-                              <button
-                                key={ctx.id}
-                                type="button"
-                                onClick={() => toggleConnectionContext(c.id, ctx.id, c.contextIds)}
-                                className={`px-2 py-1 rounded-lg text-[11px] font-medium border transition-colors ${
-                                  active
-                                    ? 'bg-violet-600 text-white border-violet-600'
-                                    : 'bg-white border-gray-200 text-gray-600 hover:border-violet-300'
-                                }`}
-                              >
-                                {ctx.name}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                {c.status === 'connected' && (
-                  <button
-                    type="button"
-                    onClick={() => setPendingDisconnect({ kind: 'connection', id: c.id, label: c.name })}
-                    className="p-2 text-gray-400 hover:text-red-600 shrink-0"
-                    aria-label="Disconnect"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
     </div>
   );
 }

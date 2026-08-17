@@ -157,7 +157,7 @@ export default function ComposePage() {
   };
 
   return (
-    <div className="max-w-2xl space-y-4">
+    <div className="max-w-6xl space-y-4">
       <h1 className="sd-display text-xl font-bold">Compose</h1>
 
       {connections.length === 0 ? (
@@ -230,7 +230,7 @@ export default function ComposePage() {
             rows={3}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-violet-200 bg-white text-sm resize-y"
+            className="w-full max-w-3xl px-3 py-2 rounded-xl border border-violet-200 bg-white text-sm resize-y"
           />
           <label className="flex items-start gap-2 text-xs text-violet-900 cursor-pointer">
             <input
@@ -282,17 +282,17 @@ export default function ComposePage() {
         placeholder="Post title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm"
+        className="w-full max-w-3xl px-3 py-2 rounded-xl border border-gray-200 text-sm"
       />
       <textarea
         placeholder="Write your post…"
         rows={8}
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm resize-y"
+        className="w-full max-w-3xl px-3 py-2 rounded-xl border border-gray-200 text-sm resize-y"
       />
 
-      <div className="space-y-2">
+      <div className="space-y-2 max-w-3xl">
         <div className="flex gap-2">
           <input
             placeholder="Paste an image URL to add it manually"
@@ -338,7 +338,7 @@ export default function ComposePage() {
         )}
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="grid sm:grid-cols-2 gap-3 max-w-3xl">
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}

@@ -21,7 +21,7 @@ const features = [
 
 const dataUse = [
   {
-    platform: 'Time To Future Community',
+    platform: 'Community by Time To Future',
     reason:
       'You paste a developer key you create yourself. We use it only to publish posts under your Community profile — nothing else.',
   },

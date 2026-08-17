@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   PenSquare,
@@ -10,6 +10,8 @@ import {
   Share2,
   User,
   BookOpen,
+  Menu,
+  X,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -24,7 +26,9 @@ const nav = [
 
 export default function Layout() {
   const { logout, user } = useAuth();
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,14 +41,41 @@ export default function Layout() {
     return () => document.removeEventListener('mousedown', onPointerDown);
   }, [menuOpen]);
 
+  // Close the mobile drawer whenever the route changes (e.g. after tapping a nav link).
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
   return (
     <div className="h-dvh flex overflow-hidden bg-[var(--sd-bg)]">
-      <aside className="w-56 shrink-0 h-full border-r border-[var(--sd-line)] bg-white flex flex-col">
-        <div className="h-14 shrink-0 px-4 flex items-center gap-2 border-b border-[var(--sd-line)]">
-          <span className="w-8 h-8 rounded-lg bg-purple-600 text-white flex items-center justify-center">
-            <Share2 className="w-4 h-4" />
+      {sidebarOpen && (
+        <div
+          aria-hidden
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+        />
+      )}
+
+      <aside
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 lg:w-56 shrink-0 h-full border-r border-[var(--sd-line)] bg-white flex flex-col transition-transform duration-200 ease-out lg:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="h-14 shrink-0 px-4 flex items-center justify-between gap-2 border-b border-[var(--sd-line)]">
+          <span className="flex items-center gap-2">
+            <span className="w-8 h-8 rounded-lg bg-purple-600 text-white flex items-center justify-center">
+              <Share2 className="w-4 h-4" />
+            </span>
+            <span className="font-semibold tracking-tight sd-display">Social Deck</span>
           </span>
-          <span className="font-semibold tracking-tight sd-display">Social Deck</span>
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(false)}
+            className="p-1.5 rounded-lg text-[var(--sd-muted)] hover:bg-purple-50 lg:hidden"
+            aria-label="Close menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
         <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
           {nav.map(({ to, label, icon: Icon, end }) => (
@@ -70,8 +101,24 @@ export default function Layout() {
         </div>
       </aside>
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
-        <header className="h-14 shrink-0 border-b border-[var(--sd-line)] bg-white/80 backdrop-blur flex items-center justify-end px-4 gap-2">
-          <div className="relative" ref={menuRef}>
+        <header className="h-14 shrink-0 border-b border-[var(--sd-line)] bg-white/80 backdrop-blur flex items-center justify-between px-3 sm:px-4 gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 -ml-1 rounded-lg text-[var(--sd-muted)] hover:bg-purple-50 lg:hidden shrink-0"
+              aria-label="Open menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <span className="flex items-center gap-2 lg:hidden min-w-0">
+              <span className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center shrink-0">
+                <Share2 className="w-3.5 h-3.5" />
+              </span>
+              <span className="font-semibold tracking-tight sd-display truncate">Social Deck</span>
+            </span>
+          </div>
+          <div className="relative shrink-0" ref={menuRef}>
             <button
               type="button"
               onClick={() => setMenuOpen((open) => !open)}
@@ -97,7 +144,7 @@ export default function Layout() {
             )}
           </div>
         </header>
-        <main className="flex-1 min-h-0 p-6 overflow-y-auto">
+        <main className="flex-1 min-h-0 p-4 sm:p-6 overflow-y-auto overflow-x-hidden">
           <Outlet />
         </main>
       </div>

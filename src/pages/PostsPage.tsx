@@ -64,7 +64,7 @@ export default function PostsPage() {
   };
 
   return (
-    <div className="max-w-3xl space-y-4">
+    <div className="max-w-6xl space-y-4">
       <h1 className="sd-display text-xl font-bold">Posts</h1>
       {isLoading ? (
         <p className="text-sm text-gray-400">Loading…</p>
@@ -74,7 +74,7 @@ export default function PostsPage() {
         <ul className="space-y-3">
           {posts.map((post) => (
             <li key={post.id} className="rounded-xl border border-gray-200 bg-white p-4">
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-sm">{post.title}</p>
                   <p className="text-xs text-gray-500 mt-1 line-clamp-2">{post.content}</p>
@@ -85,7 +85,7 @@ export default function PostsPage() {
                     </p>
                   )}
                 </div>
-                <div className="flex items-start gap-2 shrink-0">
+                <div className="flex items-start gap-2 sm:shrink-0">
                   {post.images?.length > 0 && (
                     <div className="flex -space-x-2">
                       {post.images.slice(0, 3).map((url, i) => (
