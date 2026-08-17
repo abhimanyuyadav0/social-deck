@@ -316,6 +316,9 @@ export function useAutoRun() {
         success: boolean;
         data: { autoRuns: AutoRunConfig[]; intervalOptions: number[] };
       }>('/social-deck/auto-run'),
+    // The cron that runs these ticks every 15 min server-side, independent of this page being
+    // open — poll while the page is open so status/next-run stay current without a manual reload.
+    refetchInterval: 60_000,
   });
 }
 
