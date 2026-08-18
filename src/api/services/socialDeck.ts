@@ -360,7 +360,8 @@ export function useRunAutoNow() {
 export type VideoSeriesPart = {
   order: number;
   videoUrl: string;
-  status: 'pending' | 'posted' | 'failed';
+  status: 'pending' | 'posted' | 'failed' | 'skipped';
+  durationSeconds: number;
   externalId: string;
   externalUrl?: string;
   postedAt?: string;
@@ -463,6 +464,35 @@ export function useRemoveVideoSeries() {
       api<{ success: boolean; data: { removed: boolean; hadPostedParts: boolean } }>(
         `/social-deck/video-series/${id}`,
         { method: 'DELETE' },
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.videoSeries }),
+  });
+}
+
+/** Cancel one not-yet-posted part before it publishes — e.g. it cut too short to be worth posting. */
+export function useSkipVideoSeriesPart() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, order }: { id: string; order: number }) =>
+      api<{ success: boolean; data: { series: VideoSeries } }>(
+        `/social-deck/video-series/${id}/parts/${order}/skip`,
+        { method: 'POST', body: JSON.stringify({}) },
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.videoSeries }),
+  });
+}
+
+/**
+ * Manually publish the next pending part right now instead of waiting for the scheduled Post
+ * gap. If you never use this, the normal schedule still posts it automatically.
+ */
+export function usePublishVideoSeriesPartNow() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api<{ success: boolean; data: { series: VideoSeries } }>(
+        `/social-deck/video-series/${id}/publish-now`,
+        { method: 'POST', body: JSON.stringify({}) },
       ),
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.videoSeries }),
   });

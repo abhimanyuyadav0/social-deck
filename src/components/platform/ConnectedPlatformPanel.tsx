@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'glintly-ui';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import { type Connection, useDisconnectConnection } from '@/api/services/socialDeck';
@@ -75,8 +75,21 @@ function PlatformTabs({ connection, type }: { connection: Connection; type: Plat
       : []),
   ];
 
-  const [activeTab, setActiveTab] = useState(tabs[0].id);
+  // Persisted in the URL (?tab=...) rather than plain component state, so it survives a reload
+  // instead of always snapping back to the first tab.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(
+    tabs.some((t) => t.id === tabFromUrl) ? (tabFromUrl as string) : tabs[0].id,
+  );
   const active = tabs.find((t) => t.id === activeTab) ?? tabs[0];
+
+  const selectTab = (id: string) => {
+    setActiveTab(id);
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', id);
+    setSearchParams(next, { replace: true });
+  };
 
   if (tabs.length <= 1) {
     return <>{tabs[0].content}</>;
@@ -89,7 +102,7 @@ function PlatformTabs({ connection, type }: { connection: Connection; type: Plat
           <button
             key={t.id}
             type="button"
-            onClick={() => setActiveTab(t.id)}
+            onClick={() => selectTab(t.id)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
               active.id === t.id
                 ? 'border-purple-600 text-purple-700'

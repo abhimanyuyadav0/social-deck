@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'glintly-ui';
-import { Film, Loader2, Play, Pause, Trash2, Upload } from 'lucide-react';
+import { Film, Loader2, Play, Pause, Trash2, Upload, X, TriangleAlert, Send } from 'lucide-react';
 import {
   type Connection,
   type VideoSeries,
@@ -9,11 +9,15 @@ import {
   usePauseVideoSeries,
   useResumeVideoSeries,
   useRemoveVideoSeries,
+  useSkipVideoSeriesPart,
+  usePublishVideoSeriesPartNow,
 } from '@/api/services/socialDeck';
 import AutoResizeTextarea from '@/components/AutoResizeTextarea';
 
-const INTERVAL_OPTIONS_MINUTES = [5, 10, 15, 30, 60, 120];
+const INTERVAL_OPTIONS_MINUTES = [1, 5, 10, 15, 30, 60, 120];
 const SEGMENT_OPTIONS_SECONDS = [15, 30, 60];
+/** A cut clip shorter than this is flagged as possibly not worth posting. */
+const SHORT_CLIP_THRESHOLD_SECONDS = 5;
 
 const STATUS_STYLE: Record<string, string> = {
   scheduled: 'bg-blue-100 text-blue-800',
@@ -26,9 +30,10 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 const PART_STATUS_STYLE: Record<string, string> = {
-  pending: 'bg-gray-200',
-  posted: 'bg-emerald-500',
-  failed: 'bg-red-500',
+  pending: 'bg-gray-100 text-gray-600',
+  posted: 'bg-emerald-100 text-emerald-800',
+  failed: 'bg-red-100 text-red-800',
+  skipped: 'bg-gray-100 text-gray-400 line-through',
 };
 
 function formatWhen(iso?: string | null) {
@@ -38,6 +43,22 @@ function formatWhen(iso?: string | null) {
   } catch {
     return iso;
   }
+}
+
+function formatDuration(totalSeconds: number) {
+  const s = Math.round(totalSeconds);
+  const m = Math.floor(s / 60);
+  const rem = s % 60;
+  return m > 0 ? `${m}m ${rem}s` : `${rem}s`;
+}
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function intervalLabel(minutes: number) {
+  return `Every ${minutes < 60 ? `${minutes} min` : `${minutes / 60} hr`}`;
 }
 
 function ConfirmRemoveModal({
@@ -99,10 +120,15 @@ function SeriesCard({ series }: { series: VideoSeries }) {
   const pause = usePauseVideoSeries();
   const resume = useResumeVideoSeries();
   const removeSeries = useRemoveVideoSeries();
+  const skipPart = useSkipVideoSeriesPart();
+  const publishNow = usePublishVideoSeriesPartNow();
   const [confirmRemove, setConfirmRemove] = useState(false);
 
   const postedCount = series.parts.filter((p) => p.status === 'posted').length;
   const hasLiveContent = postedCount > 0;
+  // The one part that would post next — only this one gets a "Publish now" button. Once it
+  // posts, whichever part is pending after it becomes "next" and gets the button instead.
+  const nextPendingOrder = series.parts.find((p) => p.status === 'pending')?.order;
 
   return (
     <li className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
@@ -129,7 +155,7 @@ function SeriesCard({ series }: { series: VideoSeries }) {
           </p>
           <p className="text-xs text-gray-400 mt-1">
             {series.parts.length} part{series.parts.length === 1 ? '' : 's'} · {series.segmentSeconds}s
-            clips · every {series.intervalMinutes} min · created {formatWhen(series.createdAt)}
+            target · {intervalLabel(series.intervalMinutes)} · created {formatWhen(series.createdAt)}
           </p>
         </div>
         <span
@@ -141,15 +167,91 @@ function SeriesCard({ series }: { series: VideoSeries }) {
         </span>
       </div>
 
-      <div className="flex flex-wrap gap-1">
-        {series.parts.map((p) => (
-          <span
-            key={p.order}
-            title={`Part ${p.order}: ${p.status}${p.error ? ` — ${p.error}` : ''}`}
-            className={`w-3 h-3 rounded-full ${PART_STATUS_STYLE[p.status]}`}
-          />
-        ))}
-      </div>
+      <ul className="space-y-1">
+        {series.parts.map((p) => {
+          const isShort = p.status === 'pending' && p.durationSeconds > 0 && p.durationSeconds < SHORT_CLIP_THRESHOLD_SECONDS;
+          return (
+            <li
+              key={p.order}
+              className={`flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs ${
+                isShort ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50'
+              }`}
+            >
+              <span className="flex items-center gap-1.5 min-w-0">
+                <span className="text-gray-500 shrink-0">Part {p.order}</span>
+                {p.durationSeconds > 0 && (
+                  <span className="text-gray-400 shrink-0">· {formatDuration(p.durationSeconds)}</span>
+                )}
+                {isShort && (
+                  <span className="inline-flex items-center gap-0.5 text-amber-700 shrink-0">
+                    <TriangleAlert className="w-3 h-3" />
+                    short
+                  </span>
+                )}
+                {p.error && <span className="text-red-500 truncate">{p.error}</span>}
+              </span>
+              <span className="flex items-center gap-2 shrink-0">
+                <span
+                  className={`px-1.5 py-0.5 rounded-full font-medium capitalize ${PART_STATUS_STYLE[p.status]}`}
+                >
+                  {p.status}
+                </span>
+                {p.externalUrl && (
+                  <a
+                    href={p.externalUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-purple-600 hover:underline"
+                  >
+                    View
+                  </a>
+                )}
+                {p.status === 'pending' && p.order === nextPendingOrder && (
+                  <button
+                    type="button"
+                    title="Publish this part now instead of waiting for the schedule"
+                    disabled={publishNow.isPending}
+                    onClick={() =>
+                      publishNow.mutate(series.id, {
+                        onSuccess: (res) => {
+                          const updated = res.data.series.parts.find((up) => up.order === p.order);
+                          if (updated?.status === 'posted') toast.success(`Part ${p.order} published`);
+                          else if (updated?.error) toast.error(updated.error);
+                        },
+                        onError: (e: Error) => toast.error(e.message),
+                      })
+                    }
+                    className="inline-flex items-center gap-1 text-purple-700 font-semibold hover:underline disabled:opacity-50"
+                  >
+                    {publishNow.isPending ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Send className="w-3.5 h-3.5" />
+                    )}
+                    Publish now
+                  </button>
+                )}
+                {p.status === 'pending' && (
+                  <button
+                    type="button"
+                    title="Cancel this part — it won't be posted"
+                    disabled={skipPart.isPending}
+                    onClick={() =>
+                      skipPart.mutate(
+                        { id: series.id, order: p.order },
+                        { onError: (e: Error) => toast.error(e.message) },
+                      )
+                    }
+                    className="text-gray-400 hover:text-red-600 disabled:opacity-50"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
 
       {series.status === 'scheduled' && (
         <p className="text-xs text-gray-500">Next part posts around {formatWhen(series.nextPostAt)}</p>
@@ -200,7 +302,9 @@ function SeriesCard({ series }: { series: VideoSeries }) {
   );
 }
 
-/** Instagram-only: upload one video, get it auto-cut into ~30s Reels, posted one by one. */
+type VideoMeta = { duration: number; width: number; height: number };
+
+/** Instagram-only: upload one video, get it auto-cut into Reels, posted one by one. */
 export default function VideoSeriesSection({ connection }: { connection: Connection }) {
   const { data: seriesData, isLoading } = useVideoSeriesList();
   const createSeries = useCreateVideoSeries();
@@ -210,10 +314,26 @@ export default function VideoSeriesSection({ connection }: { connection: Connect
   );
 
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoMeta, setVideoMeta] = useState<VideoMeta | null>(null);
   const [caption, setCaption] = useState('');
   const [intervalMinutes, setIntervalMinutes] = useState(15);
   const [segmentSeconds, setSegmentSeconds] = useState(30);
   const [customSegment, setCustomSegment] = useState(false);
+
+  const onFileChange = (file: File | null) => {
+    setVideoFile(file);
+    setVideoMeta(null);
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    const videoEl = document.createElement('video');
+    videoEl.preload = 'metadata';
+    videoEl.onloadedmetadata = () => {
+      setVideoMeta({ duration: videoEl.duration, width: videoEl.videoWidth, height: videoEl.videoHeight });
+      URL.revokeObjectURL(url);
+    };
+    videoEl.src = url;
+  };
 
   const submit = () => {
     if (!videoFile) {
@@ -226,12 +346,22 @@ export default function VideoSeriesSection({ connection }: { connection: Connect
         onSuccess: (res) => {
           toast.success(`Series created — ${res.data.series.parts.length} parts scheduled`);
           setVideoFile(null);
+          setVideoMeta(null);
           setCaption('');
         },
         onError: (e: Error) => toast.error(e.message),
       },
     );
   };
+
+  const estimatedParts = videoMeta ? Math.max(1, Math.ceil(videoMeta.duration / segmentSeconds)) : null;
+  const aspectHint = videoMeta
+    ? videoMeta.width === videoMeta.height
+      ? 'square'
+      : videoMeta.width < videoMeta.height
+        ? 'vertical'
+        : 'horizontal (will be letterboxed)'
+    : null;
 
   return (
     <div className="space-y-4">
@@ -261,16 +391,37 @@ export default function VideoSeriesSection({ connection }: { connection: Connect
               type="file"
               accept="video/mp4,video/quicktime,video/webm"
               className="hidden"
-              onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+              onChange={(e) => onFileChange(e.target.files?.[0] || null)}
             />
           </label>
+          {videoFile && (
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-gray-500 px-1">
+              <span>{formatBytes(videoFile.size)}</span>
+              {videoMeta ? (
+                <>
+                  <span>{formatDuration(videoMeta.duration)} long</span>
+                  <span>
+                    {videoMeta.width}×{videoMeta.height} ({aspectHint})
+                  </span>
+                  {estimatedParts && (
+                    <span className="text-violet-700 font-medium">
+                      ≈ {estimatedParts} clip{estimatedParts === 1 ? '' : 's'} at {segmentSeconds}s each
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span>Reading video details…</span>
+              )}
+            </div>
+          )}
         </label>
 
         <label className="block">
           <span className="text-xs font-medium text-gray-600">Clip length</span>
           <p className="text-[11px] text-[var(--sd-muted)] mt-0.5 mb-1">
-            How long each cut piece is. The last clip may be shorter if the video doesn&apos;t
-            divide evenly.
+            How long each cut piece is. Cuts land on the nearest keyframe, so actual clip lengths
+            may vary a bit from this target — check each part&apos;s real length after creating
+            the series.
           </p>
           <div className="flex flex-wrap gap-2">
             {SEGMENT_OPTIONS_SECONDS.map((s) => (
@@ -329,7 +480,11 @@ export default function VideoSeriesSection({ connection }: { connection: Connect
 
         <label className="block">
           <span className="text-xs font-medium text-gray-600">Post gap</span>
-          <div className="flex flex-wrap gap-2 mt-1">
+          <p className="text-[11px] text-[var(--sd-muted)] mt-0.5 mb-1">
+            How long to wait between parts on the automatic schedule. You can also publish the
+            next part manually at any time from its card below, ahead of schedule.
+          </p>
+          <div className="flex flex-wrap gap-2">
             {INTERVAL_OPTIONS_MINUTES.map((m) => (
               <button
                 key={m}
@@ -341,7 +496,7 @@ export default function VideoSeriesSection({ connection }: { connection: Connect
                     : 'bg-white border-gray-200 text-gray-700 hover:border-purple-300'
                 }`}
               >
-                Every {m < 60 ? `${m} min` : `${m / 60} hr`}
+                {intervalLabel(m)}
               </button>
             ))}
           </div>
