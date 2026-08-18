@@ -362,6 +362,7 @@ export type VideoSeriesPart = {
   videoUrl: string;
   status: 'pending' | 'posted' | 'failed';
   externalId: string;
+  externalUrl?: string;
   postedAt?: string;
   error: string;
 };
@@ -386,6 +387,8 @@ export type VideoSeries = {
   nextPostAt?: string | null;
   lastError: string;
   createdAt: string;
+  /** True once removed from the active list — hidden from Video Reel Series, kept for Post History. */
+  removed: boolean;
 };
 
 export function useVideoSeriesList() {
@@ -446,23 +449,21 @@ export function useResumeVideoSeries() {
   });
 }
 
-export function useDeletePostedContent() {
+/**
+ * Removes the series from the active Video Reel Series list and deletes every video file this
+ * app uploaded for it. The record itself is kept (not deleted) so already-posted parts still
+ * show up in Post History. Does NOT delete anything from Instagram — Meta's API has no delete
+ * endpoint for the "Instagram API with Instagram Login" connection type this app uses, only for
+ * the Facebook-Login variant. Any already-posted Reels stay live on Instagram.
+ */
+export function useRemoveVideoSeries() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      api<{ success: boolean; data: { series: VideoSeries } }>(
-        `/social-deck/video-series/${id}/delete-posts`,
-        { method: 'POST', body: JSON.stringify({}) },
+      api<{ success: boolean; data: { removed: boolean; hadPostedParts: boolean } }>(
+        `/social-deck/video-series/${id}`,
+        { method: 'DELETE' },
       ),
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.videoSeries }),
-  });
-}
-
-export function useDeleteVideoSeriesRecord() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) =>
-      api(`/social-deck/video-series/${id}`, { method: 'DELETE' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.videoSeries }),
   });
 }

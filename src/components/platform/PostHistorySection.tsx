@@ -1,7 +1,15 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'glintly-ui';
-import { RotateCcw, Loader2 } from 'lucide-react';
-import { type Connection, usePosts, usePublishPost } from '@/api/services/socialDeck';
+import { RotateCcw, Loader2, Film } from 'lucide-react';
+import {
+  type Connection,
+  type SocialPost,
+  type VideoSeries,
+  type VideoSeriesPart,
+  usePosts,
+  usePublishPost,
+  useVideoSeriesList,
+} from '@/api/services/socialDeck';
 
 const STATUS_STYLE: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-600',
@@ -20,8 +28,57 @@ function formatPostTime(iso?: string) {
   }
 }
 
+type HistoryItem =
+  | { kind: 'post'; sortAt: number; post: SocialPost }
+  | { kind: 'video-part'; sortAt: number; series: VideoSeries; part: VideoSeriesPart };
+
+function VideoPartRow({ series, part }: { series: VideoSeries; part: VideoSeriesPart }) {
+  const label = series.caption
+    ? `${series.caption} · Part ${part.order}/${series.parts.length}`
+    : `Video Reel · Part ${part.order}/${series.parts.length}`;
+
+  return (
+    <li className="rounded-xl border border-gray-200 bg-white p-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-sm flex items-center gap-1.5">
+            <Film className="w-3.5 h-3.5 text-violet-500 shrink-0" />
+            {label}
+          </p>
+          {part.postedAt && (
+            <p className="text-[11px] text-gray-400 mt-1.5">Posted {formatPostTime(part.postedAt)}</p>
+          )}
+        </div>
+        <span
+          className={`text-[10px] px-2 py-0.5 rounded-full font-medium capitalize shrink-0 ${
+            part.status === 'posted' ? STATUS_STYLE.published : STATUS_STYLE.failed
+          }`}
+        >
+          {part.status === 'posted' ? 'published' : part.status}
+        </span>
+      </div>
+      {(part.externalUrl || part.error) && (
+        <div className="mt-2 text-xs text-gray-600 flex flex-wrap items-center gap-x-2 gap-y-1">
+          {part.externalUrl && (
+            <a
+              href={part.externalUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-purple-600 hover:underline"
+            >
+              View
+            </a>
+          )}
+          {part.error && <span className="text-red-500">{part.error}</span>}
+        </div>
+      )}
+    </li>
+  );
+}
+
 export default function PostHistorySection({ connection }: { connection: Connection }) {
   const { data, isLoading } = usePosts();
+  const { data: seriesData, isLoading: isLoadingSeries } = useVideoSeriesList();
   const publishPost = usePublishPost();
   const [retryingKey, setRetryingKey] = useState<string | null>(null);
 
@@ -30,6 +87,32 @@ export default function PostHistorySection({ connection }: { connection: Connect
       p.targetConnectionIds?.includes(connection.id) ||
       p.results?.some((r) => r.connectionId === connection.id),
   );
+
+  const seriesForConnection = (seriesData?.data?.series ?? []).filter(
+    (s) => s.connectionId === connection.id,
+  );
+
+  const items = useMemo<HistoryItem[]>(() => {
+    const postItems: HistoryItem[] = posts.map((post) => ({
+      kind: 'post',
+      sortAt: new Date(post.publishedAt || post.createdAt).getTime() || 0,
+      post,
+    }));
+
+    const videoItems: HistoryItem[] = seriesForConnection.flatMap((series) =>
+      series.parts
+        .filter((part) => part.status === 'posted' || part.status === 'failed')
+        .map((part) => ({
+          kind: 'video-part' as const,
+          sortAt: new Date(part.postedAt || series.createdAt).getTime() || 0,
+          series,
+          part,
+        })),
+    );
+
+    return [...postItems, ...videoItems].sort((a, b) => b.sortAt - a.sortAt);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [posts, seriesForConnection]);
 
   const retryFailed = (postId: string) => {
     const key = `${postId}:${connection.id}`;
@@ -44,130 +127,136 @@ export default function PostHistorySection({ connection }: { connection: Connect
     );
   };
 
+  const loading = isLoading || isLoadingSeries;
+
   return (
     <div className="space-y-4">
       <h2 className="sd-display text-lg font-bold">Post history</h2>
-      {isLoading ? (
+      {loading ? (
         <p className="text-sm text-gray-400">Loading…</p>
-      ) : posts.length === 0 ? (
+      ) : items.length === 0 ? (
         <p className="text-sm text-gray-400">No posts yet for this connection.</p>
       ) : (
         <ul className="space-y-3">
-          {posts.map((post) => (
-            <li key={post.id} className="rounded-xl border border-gray-200 bg-white p-4">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-sm">{post.title}</p>
-                  <p className="text-xs text-gray-500 mt-1 line-clamp-2">{post.content}</p>
-                  {formatPostTime(post.publishedAt || post.createdAt) && (
-                    <p className="text-[11px] text-gray-400 mt-1.5">
-                      {post.publishedAt ? 'Posted' : 'Created'}{' '}
-                      {formatPostTime(post.publishedAt || post.createdAt)}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-start gap-2 sm:shrink-0">
-                  {post.images?.length > 0 && (
-                    <div className="flex -space-x-2">
-                      {post.images.slice(0, 3).map((url, i) => (
-                        <img
-                          key={`${url}-${i}`}
-                          src={url}
-                          alt=""
-                          className="w-14 h-14 rounded-lg object-cover border-2 border-white shadow-sm"
-                          style={{ zIndex: 3 - i }}
-                        />
-                      ))}
-                      {post.images.length > 3 && (
-                        <span className="w-14 h-14 rounded-lg bg-gray-800/80 text-white text-xs font-semibold flex items-center justify-center border-2 border-white">
-                          +{post.images.length - 3}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  <span
-                    className={`text-[10px] px-2 py-0.5 rounded-full font-medium capitalize ${
-                      STATUS_STYLE[post.status] ?? STATUS_STYLE.draft
-                    }`}
-                  >
-                    {post.status}
-                  </span>
-                </div>
-              </div>
-              {post.results
-                ?.filter((r) => r.connectionId === connection.id)
-                .map((r, i) => {
-                  const key = `${post.id}:${connection.id}:${i}`;
-                  const isRetrying = retryingKey === `${post.id}:${connection.id}`;
-                  return (
-                    <div
-                      key={key}
-                      className="mt-2 text-xs text-gray-600 flex flex-wrap items-center gap-x-2 gap-y-1"
+          {items.map((item) =>
+            item.kind === 'video-part' ? (
+              <VideoPartRow key={`video-${item.series.id}-${item.part.order}`} series={item.series} part={item.part} />
+            ) : (
+              <li key={item.post.id} className="rounded-xl border border-gray-200 bg-white p-4">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-sm">{item.post.title}</p>
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.post.content}</p>
+                    {formatPostTime(item.post.publishedAt || item.post.createdAt) && (
+                      <p className="text-[11px] text-gray-400 mt-1.5">
+                        {item.post.publishedAt ? 'Posted' : 'Created'}{' '}
+                        {formatPostTime(item.post.publishedAt || item.post.createdAt)}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-start gap-2 sm:shrink-0">
+                    {item.post.images?.length > 0 && (
+                      <div className="flex -space-x-2">
+                        {item.post.images.slice(0, 3).map((url, i) => (
+                          <img
+                            key={`${url}-${i}`}
+                            src={url}
+                            alt=""
+                            className="w-14 h-14 rounded-lg object-cover border-2 border-white shadow-sm"
+                            style={{ zIndex: 3 - i }}
+                          />
+                        ))}
+                        {item.post.images.length > 3 && (
+                          <span className="w-14 h-14 rounded-lg bg-gray-800/80 text-white text-xs font-semibold flex items-center justify-center border-2 border-white">
+                            +{item.post.images.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-medium capitalize ${
+                        STATUS_STYLE[item.post.status] ?? STATUS_STYLE.draft
+                      }`}
                     >
-                      <span
-                        className={`capitalize ${
-                          r.status === 'failed'
-                            ? 'text-red-600'
-                            : r.status === 'published'
-                              ? 'text-emerald-700'
-                              : ''
-                        }`}
+                      {item.post.status}
+                    </span>
+                  </div>
+                </div>
+                {item.post.results
+                  ?.filter((r) => r.connectionId === connection.id)
+                  .map((r, i) => {
+                    const key = `${item.post.id}:${connection.id}:${i}`;
+                    const isRetrying = retryingKey === `${item.post.id}:${connection.id}`;
+                    return (
+                      <div
+                        key={key}
+                        className="mt-2 text-xs text-gray-600 flex flex-wrap items-center gap-x-2 gap-y-1"
                       >
-                        {r.status}
-                      </span>
-                      {r.externalUrl && (
-                        <a
-                          href={r.externalUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-purple-600 hover:underline"
+                        <span
+                          className={`capitalize ${
+                            r.status === 'failed'
+                              ? 'text-red-600'
+                              : r.status === 'published'
+                                ? 'text-emerald-700'
+                                : ''
+                          }`}
                         >
-                          View
-                        </a>
-                      )}
-                      {r.error && <span className="text-red-500">{r.error}</span>}
-                      {r.status === 'failed' && (
-                        <button
-                          type="button"
-                          disabled={isRetrying || publishPost.isPending}
-                          onClick={() => retryFailed(post.id)}
-                          className="inline-flex items-center gap-1 text-purple-700 font-semibold hover:underline disabled:opacity-50"
-                        >
-                          {isRetrying ? (
-                            <>
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                              Retrying…
-                            </>
-                          ) : (
-                            <>
-                              <RotateCcw className="w-3 h-3" />
-                              Retry
-                            </>
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              {post.status === 'draft' && (post.targetConnectionIds?.length ?? 0) > 0 && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    publishPost.mutate(
-                      { id: post.id },
-                      {
-                        onSuccess: () => toast.success('Published'),
-                        onError: (e: Error) => toast.error(e.message),
-                      },
-                    )
-                  }
-                  className="mt-3 text-xs font-semibold text-purple-600 hover:underline"
-                >
-                  Publish now
-                </button>
-              )}
-            </li>
-          ))}
+                          {r.status}
+                        </span>
+                        {r.externalUrl && (
+                          <a
+                            href={r.externalUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-purple-600 hover:underline"
+                          >
+                            View
+                          </a>
+                        )}
+                        {r.error && <span className="text-red-500">{r.error}</span>}
+                        {r.status === 'failed' && (
+                          <button
+                            type="button"
+                            disabled={isRetrying || publishPost.isPending}
+                            onClick={() => retryFailed(item.post.id)}
+                            className="inline-flex items-center gap-1 text-purple-700 font-semibold hover:underline disabled:opacity-50"
+                          >
+                            {isRetrying ? (
+                              <>
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                Retrying…
+                              </>
+                            ) : (
+                              <>
+                                <RotateCcw className="w-3 h-3" />
+                                Retry
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                {item.post.status === 'draft' && (item.post.targetConnectionIds?.length ?? 0) > 0 && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      publishPost.mutate(
+                        { id: item.post.id },
+                        {
+                          onSuccess: () => toast.success('Published'),
+                          onError: (e: Error) => toast.error(e.message),
+                        },
+                      )
+                    }
+                    className="mt-3 text-xs font-semibold text-purple-600 hover:underline"
+                  >
+                    Publish now
+                  </button>
+                )}
+              </li>
+            ),
+          )}
         </ul>
       )}
     </div>

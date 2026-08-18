@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'glintly-ui';
-import { Film, Loader2, Play, Pause, Trash2, X, Upload } from 'lucide-react';
+import { Film, Loader2, Play, Pause, Trash2, Upload } from 'lucide-react';
 import {
   type Connection,
   type VideoSeries,
@@ -8,8 +8,7 @@ import {
   useCreateVideoSeries,
   usePauseVideoSeries,
   useResumeVideoSeries,
-  useDeletePostedContent,
-  useDeleteVideoSeriesRecord,
+  useRemoveVideoSeries,
 } from '@/api/services/socialDeck';
 import AutoResizeTextarea from '@/components/AutoResizeTextarea';
 
@@ -41,13 +40,15 @@ function formatWhen(iso?: string | null) {
   }
 }
 
-function ConfirmDeletePostsModal({
+function ConfirmRemoveModal({
   open,
+  hasLiveContent,
   onClose,
   onConfirm,
   pending,
 }: {
   open: boolean;
+  hasLiveContent: boolean;
   onClose: () => void;
   onConfirm: () => void;
   pending: boolean;
@@ -57,10 +58,20 @@ function ConfirmDeletePostsModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
-        <h2 className="font-semibold text-gray-900">Delete posted Reels?</h2>
+        <h2 className="font-semibold text-gray-900">Remove this series?</h2>
         <p className="text-sm text-gray-600 leading-relaxed">
-          This permanently removes every part of this series that's currently live on Instagram.
-          This can&apos;t be undone.
+          This takes it off this list and deletes its video files from Social Deck.
+          {hasLiveContent
+            ? " Posted parts stay visible in Post History as a record of what went out — this just stops managing/scheduling this series."
+            : ''}
+          {hasLiveContent && (
+            <>
+              {' '}
+              <strong>It does not delete anything from Instagram</strong> — Instagram&apos;s API
+              doesn&apos;t support deleting Reels for this kind of connection, so any parts already
+              posted stay live there. Delete them in the Instagram app if you want them gone too.
+            </>
+          )}
         </p>
         <div className="flex gap-2 justify-end">
           <button
@@ -76,7 +87,7 @@ function ConfirmDeletePostsModal({
             onClick={onConfirm}
             className="px-4 py-2 text-sm rounded-xl bg-red-600 text-white font-semibold disabled:opacity-50"
           >
-            {pending ? 'Deleting…' : 'Delete from Instagram'}
+            {pending ? 'Removing…' : 'Remove from Social Deck'}
           </button>
         </div>
       </div>
@@ -87,24 +98,24 @@ function ConfirmDeletePostsModal({
 function SeriesCard({ series }: { series: VideoSeries }) {
   const pause = usePauseVideoSeries();
   const resume = useResumeVideoSeries();
-  const deletePosted = useDeletePostedContent();
-  const deleteRecord = useDeleteVideoSeriesRecord();
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const removeSeries = useRemoveVideoSeries();
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   const postedCount = series.parts.filter((p) => p.status === 'posted').length;
   const hasLiveContent = postedCount > 0;
 
   return (
     <li className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
-      <ConfirmDeletePostsModal
-        open={confirmDelete}
-        onClose={() => setConfirmDelete(false)}
-        pending={deletePosted.isPending}
+      <ConfirmRemoveModal
+        open={confirmRemove}
+        hasLiveContent={hasLiveContent}
+        onClose={() => setConfirmRemove(false)}
+        pending={removeSeries.isPending}
         onConfirm={() =>
-          deletePosted.mutate(series.id, {
+          removeSeries.mutate(series.id, {
             onSuccess: () => {
-              toast.success('Posted content deleted');
-              setConfirmDelete(false);
+              toast.success('Series removed from Social Deck');
+              setConfirmRemove(false);
             },
             onError: (e: Error) => toast.error(e.message),
           })
@@ -176,29 +187,14 @@ function SeriesCard({ series }: { series: VideoSeries }) {
             Resume
           </button>
         )}
-        {hasLiveContent && (
-          <button
-            type="button"
-            onClick={() => setConfirmDelete(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 text-red-600 text-xs font-medium hover:bg-red-50"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            Delete posted content ({postedCount})
-          </button>
-        )}
-        {!hasLiveContent && (
-          <button
-            type="button"
-            onClick={() =>
-              deleteRecord.mutate(series.id, { onError: (e: Error) => toast.error(e.message) })
-            }
-            disabled={deleteRecord.isPending}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-500 hover:text-red-600 disabled:opacity-50"
-          >
-            <X className="w-3.5 h-3.5" />
-            Remove
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => setConfirmRemove(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 text-red-600 text-xs font-medium hover:bg-red-50"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+          Remove from Social Deck{hasLiveContent ? ` (${postedCount} live on Instagram)` : ''}
+        </button>
       </div>
     </li>
   );
@@ -210,7 +206,7 @@ export default function VideoSeriesSection({ connection }: { connection: Connect
   const createSeries = useCreateVideoSeries();
 
   const seriesList = (seriesData?.data?.series ?? []).filter(
-    (s) => s.connectionId === connection.id,
+    (s) => s.connectionId === connection.id && !s.removed,
   );
 
   const [videoFile, setVideoFile] = useState<File | null>(null);
