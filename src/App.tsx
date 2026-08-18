@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { BackendStatusBanner, ToastContainer, ThemeProvider } from 'glintly-ui';
-import { resolveBackendHealthUrl } from '@/utils/backendHealthUrl';
+import { ToastContainer, ThemeProvider } from 'glintly-ui';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Layout from '@/components/Layout';
 import LoginPage from '@/pages/LoginPage';
@@ -15,7 +14,6 @@ import DocsPage from '@/pages/DocsPage';
 export default function App() {
   return (
     <ThemeProvider config={{ defaultMode: 'light' }}>
-      <BackendStatusBanner healthCheckUrl={resolveBackendHealthUrl()} />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
