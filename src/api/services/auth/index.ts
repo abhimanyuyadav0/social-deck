@@ -29,6 +29,12 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
   return data;
 }
 
+/** Stores a raw JWT already issued elsewhere (e.g. TTF SSO code exchange), same shape as login(). */
+export async function storeToken(token: string): Promise<void> {
+  const toStore = shouldEncrypt() ? await encrypt(token) : token;
+  localStorage.setItem(TOKEN_KEY, toStore);
+}
+
 export async function register(payload: RegisterPayload): Promise<RegisterResponse> {
   return api<RegisterResponse>(AUTH.REGISTER, {
     method: 'POST',

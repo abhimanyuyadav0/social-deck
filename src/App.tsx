@@ -3,6 +3,7 @@ import { ToastContainer, ThemeProvider } from 'glintly-ui';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Layout from '@/components/Layout';
 import LoginPage from '@/pages/LoginPage';
+import SsoCallback from '@/pages/SsoCallback';
 import SignupPage from '@/pages/SignupPage';
 import VerifyEmailPage from '@/pages/VerifyEmailPage';
 import DashboardPage from '@/pages/DashboardPage';
@@ -16,6 +17,7 @@ export default function App() {
     <ThemeProvider config={{ defaultMode: 'light' }}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/auth/ttf/callback" element={<SsoCallback />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route

@@ -7,6 +7,8 @@ interface AuthContextValue {
   token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  /** Accepts a raw JWT already issued elsewhere (e.g. TTF SSO code exchange), stores it, then loads the user. */
+  loginWithToken: (token: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -51,6 +53,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(res.data.user);
   }, []);
 
+  const loginWithToken = useCallback(
+    async (t: string) => {
+      await authApi.storeToken(t);
+      await refreshUser();
+    },
+    [refreshUser]
+  );
+
   const logout = useCallback(() => {
     authApi.logout();
     setUser(null);
@@ -58,7 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout, refreshUser }}>
+    <AuthContext.Provider
+      value={{ user, token, isLoading, login, loginWithToken, logout, refreshUser }}
+    >
       {children}
     </AuthContext.Provider>
   );

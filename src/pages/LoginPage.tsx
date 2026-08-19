@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthShell, AuthField } from '@/components/AuthShell';
+import { startTtfSignIn } from '@/utils/ttfSso';
 
 export default function LoginPage() {
   const { login, user, isLoading } = useAuth();
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [ssoLoading, setSsoLoading] = useState(false);
 
   if (!isLoading && user) return <Navigate to="/" replace />;
 
@@ -29,6 +31,11 @@ export default function LoginPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  function onSsoSignIn() {
+    setSsoLoading(true);
+    startTtfSignIn().catch(() => setSsoLoading(false));
   }
 
   return (
@@ -74,6 +81,26 @@ export default function LoginPage() {
           className="w-full mt-1 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 active:scale-[0.99] transition disabled:opacity-60 flex items-center justify-center gap-2 shadow-md shadow-purple-600/20"
         >
           {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign in'}
+        </button>
+
+        <div className="relative py-1">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-purple-100" />
+          </div>
+          <div className="relative flex justify-center">
+            <span className="bg-white px-2 text-[10px] uppercase tracking-wide text-[var(--sd-muted)]">
+              or
+            </span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onSsoSignIn}
+          disabled={ssoLoading}
+          className="w-full py-2.5 rounded-xl border border-purple-200 bg-white text-[var(--sd-ink)] text-sm font-semibold hover:bg-purple-50 active:scale-[0.99] transition disabled:opacity-60 flex items-center justify-center gap-2"
+        >
+          {ssoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign in with TTF Account'}
         </button>
 
         <p className="text-center text-xs text-[var(--sd-muted)] pt-1">
