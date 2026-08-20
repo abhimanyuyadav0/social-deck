@@ -8,6 +8,7 @@ const CONNECTION_TYPE: Record<PlatformType, string> = {
   instagram: 'instagram',
   youtube: 'youtube',
   community: 'ttf_community',
+  facebook: 'facebook',
 };
 
 /** Single-account platform page (LinkedIn/YouTube/Community). Instagram and Facebook use their
