@@ -61,14 +61,18 @@ const keys = {
   connections: ['social-deck', 'connections'] as const,
   posts: ['social-deck', 'posts'] as const,
   ai: ['social-deck', 'ai'] as const,
+  aiUsage: ['social-deck', 'ai-usage'] as const,
   aiContexts: ['social-deck', 'ai-contexts'] as const,
   autoRun: ['social-deck', 'auto-run'] as const,
   videoSeries: ['social-deck', 'video-series'] as const,
+  videoGenerations: (connectionId: string) => ['social-deck', 'video-generations', connectionId] as const,
 };
+
+export type AiProvider = 'openai' | 'gemini';
 
 export type AiConfig = {
   connected: boolean;
-  provider?: string;
+  provider?: AiProvider;
   model?: string;
   keyPrefix?: string;
   connectedAt?: string;
@@ -95,6 +99,7 @@ export type GeneratedPost = {
   category: string;
   tags: string[];
   images: string[];
+  videoJob?: VideoGenerationJob | null;
 };
 
 export type AutoRunConfig = {
@@ -105,11 +110,12 @@ export type AutoRunConfig = {
   intervalHours: number;
   topics: string[];
   promptHint: string;
-  generateImage?: boolean;
+  mediaType?: 'none' | 'image' | 'video';
+  durationSeconds?: number;
   nextRunAt?: string | null;
   lastRunAt?: string | null;
   lastError?: string;
-  lastStatus?: 'idle' | 'running' | 'success' | 'failed' | 'skipped';
+  lastStatus?: 'idle' | 'running' | 'success' | 'failed' | 'skipped' | 'video_pending';
   runCount?: number;
   lastPostId?: string | null;
 };
@@ -181,6 +187,34 @@ export function useAiConfig() {
   return useQuery({
     queryKey: keys.ai,
     queryFn: () => api<{ success: boolean; data: { ai: AiConfig } }>('/social-deck/ai'),
+  });
+}
+
+export type AiUsage = {
+  callsLastHour: number;
+  callsLast24h: number;
+  lastCallAt: string | null;
+  lastError: {
+    at: string;
+    statusCode: number;
+    rateLimited: boolean;
+    message: string;
+    provider: AiProvider;
+    retryAfterSeconds: number;
+    retryAt: string | null;
+  } | null;
+};
+
+/**
+ * Google/OpenAI don't expose a quota-remaining API to callers like us, so this is *our own*
+ * call volume/error tracking — the closest thing to "usage" we can actually show.
+ */
+export function useAiUsage(enabled: boolean) {
+  return useQuery({
+    queryKey: keys.aiUsage,
+    queryFn: () => api<{ success: boolean; data: { usage: AiUsage } }>('/social-deck/ai/usage'),
+    enabled,
+    refetchInterval: 30_000,
   });
 }
 
@@ -257,7 +291,7 @@ export function useSetConnectionContext() {
 export function useConnectAi() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: { apiKey: string; model?: string }) =>
+    mutationFn: (body: { apiKey: string; provider?: AiProvider; model?: string }) =>
       api('/social-deck/ai/connect', { method: 'POST', body: JSON.stringify(body) }),
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.ai }),
   });
@@ -273,7 +307,12 @@ export function useDisconnectAi() {
 
 export function useGenerateWithAi() {
   return useMutation({
-    mutationFn: (body: { prompt: string; connectionIds: string[]; generateImage?: boolean }) =>
+    mutationFn: (body: {
+      prompt: string;
+      connectionIds: string[];
+      mediaType?: 'none' | 'image' | 'video';
+      durationSeconds?: number;
+    }) =>
       api<{ success: boolean; data: { post: GeneratedPost } }>('/social-deck/ai/generate', {
         method: 'POST',
         body: JSON.stringify(body),
@@ -483,6 +522,23 @@ export function useSkipVideoSeriesPart() {
 }
 
 /**
+ * Retry a failed or skipped part — resets it to pending and immediately attempts to publish it,
+ * same "try now, show the result" behavior as publish-now. A skipped part can only be retried if
+ * it was skipped after retry support shipped — older skips already deleted the video file.
+ */
+export function useRetryVideoSeriesPart() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, order }: { id: string; order: number }) =>
+      api<{ success: boolean; data: { series: VideoSeries } }>(
+        `/social-deck/video-series/${id}/parts/${order}/retry`,
+        { method: 'POST', body: JSON.stringify({}) },
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.videoSeries }),
+  });
+}
+
+/**
  * Manually publish the next pending part right now instead of waiting for the scheduled Post
  * gap. If you never use this, the normal schedule still posts it automatically.
  */
@@ -495,5 +551,49 @@ export function usePublishVideoSeriesPartNow() {
         { method: 'POST', body: JSON.stringify({}) },
       ),
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.videoSeries }),
+  });
+}
+
+// --- AI video generation (Gemini/Veo -> Instagram Reels) ---
+
+export type VideoGenerationJob = {
+  id: string;
+  connectionId: string;
+  prompt: string;
+  caption: string;
+  status: 'generating' | 'ready' | 'publishing' | 'published' | 'failed';
+  videoUrl: string;
+  externalUrl: string;
+  error: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/** Polls while any job is still generating/publishing — stops once everything's settled. */
+export function useVideoGenerations(connectionId: string | undefined) {
+  return useQuery({
+    queryKey: keys.videoGenerations(connectionId ?? ''),
+    queryFn: () =>
+      api<{ success: boolean; data: { jobs: VideoGenerationJob[] } }>(
+        `/social-deck/video-generations?connectionId=${connectionId}`,
+      ),
+    enabled: !!connectionId,
+    refetchInterval: (query) => {
+      const jobs = query.state.data?.data.jobs ?? [];
+      const inFlight = jobs.some((j) => j.status === 'generating' || j.status === 'publishing');
+      return inFlight ? 5000 : false;
+    },
+  });
+}
+
+export function usePublishVideoGeneration(connectionId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (jobId: string) =>
+      api<{ success: boolean; data: { job: VideoGenerationJob } }>(
+        `/social-deck/video-generations/${jobId}/publish`,
+        { method: 'POST', body: JSON.stringify({}) },
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.videoGenerations(connectionId) }),
   });
 }

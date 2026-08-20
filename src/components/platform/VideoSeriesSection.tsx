@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'glintly-ui';
-import { Film, Loader2, Play, Pause, Trash2, Upload, X, TriangleAlert, Send } from 'lucide-react';
+import { Film, Loader2, Play, Pause, Trash2, Upload, X, TriangleAlert, Send, RotateCcw } from 'lucide-react';
 import {
   type Connection,
   type VideoSeries,
@@ -10,6 +10,7 @@ import {
   useResumeVideoSeries,
   useRemoveVideoSeries,
   useSkipVideoSeriesPart,
+  useRetryVideoSeriesPart,
   usePublishVideoSeriesPartNow,
 } from '@/api/services/socialDeck';
 import AutoResizeTextarea from '@/components/AutoResizeTextarea';
@@ -121,6 +122,7 @@ function SeriesCard({ series }: { series: VideoSeries }) {
   const resume = useResumeVideoSeries();
   const removeSeries = useRemoveVideoSeries();
   const skipPart = useSkipVideoSeriesPart();
+  const retryPart = useRetryVideoSeriesPart();
   const publishNow = usePublishVideoSeriesPartNow();
   const [confirmRemove, setConfirmRemove] = useState(false);
 
@@ -245,6 +247,34 @@ function SeriesCard({ series }: { series: VideoSeries }) {
                     className="text-gray-400 hover:text-red-600 disabled:opacity-50"
                   >
                     <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {(p.status === 'failed' || p.status === 'skipped') && (
+                  <button
+                    type="button"
+                    title={p.status === 'failed' ? 'Retry publishing this part now' : 'Publish this skipped part now'}
+                    disabled={retryPart.isPending}
+                    onClick={() =>
+                      retryPart.mutate(
+                        { id: series.id, order: p.order },
+                        {
+                          onSuccess: (res) => {
+                            const updated = res.data.series.parts.find((up) => up.order === p.order);
+                            if (updated?.status === 'posted') toast.success(`Part ${p.order} published`);
+                            else if (updated?.error) toast.error(updated.error);
+                          },
+                          onError: (e: Error) => toast.error(e.message),
+                        },
+                      )
+                    }
+                    className="inline-flex items-center gap-1 text-purple-700 font-semibold hover:underline disabled:opacity-50"
+                  >
+                    {retryPart.isPending ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <RotateCcw className="w-3.5 h-3.5" />
+                    )}
+                    {p.status === 'failed' ? 'Retry' : 'Send'}
                   </button>
                 )}
               </span>

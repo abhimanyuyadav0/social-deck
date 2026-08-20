@@ -3,6 +3,7 @@ import { toast } from 'glintly-ui';
 import { Trash2, X, Loader2, Play, Clock } from 'lucide-react';
 import {
   type Connection,
+  useAiConfig,
   useAiContexts,
   useCreateAiContext,
   useUpdateAiContext,
@@ -22,6 +23,8 @@ const IMAGE_STYLES = [
   'Hand-drawn sketch',
   'Cinematic dark',
 ];
+
+const DURATION_OPTIONS = [5, 6, 7, 8];
 
 function formatWhen(iso?: string | null) {
   if (!iso) return '—';
@@ -89,6 +92,7 @@ function ConfirmDeleteModal({
 
 /** Briefing (who-you-are/goals/voice/etc) + Auto Run schedule for exactly this one connection. */
 export default function ContextPanel({ connection }: { connection: Connection }) {
+  const { data: aiData } = useAiConfig();
   const { data: contextsData } = useAiContexts();
   const { data: autoRunData, isLoading } = useAutoRun();
   const createContext = useCreateAiContext();
@@ -105,6 +109,9 @@ export default function ContextPanel({ connection }: { connection: Connection })
     ? autoRunData?.data?.autoRuns.find((a) => a.contextId === connection.contextId)
     : undefined;
   const intervalOptions = autoRunData?.data?.intervalOptions ?? [1, 2, 3, 4, 6, 8, 12, 24];
+  const ai = aiData?.data?.ai;
+  const isGeminiAi = ai?.provider === 'gemini';
+  const canGenerateVideo = connection.type === 'instagram';
 
   const [showDelete, setShowDelete] = useState(false);
   const [enabled, setEnabled] = useState(false);
@@ -119,7 +126,8 @@ export default function ContextPanel({ connection }: { connection: Connection })
   const [intervalHours, setIntervalHours] = useState(24);
   const [topicsText, setTopicsText] = useState('');
   const [promptHint, setPromptHint] = useState('');
-  const [generateImage, setGenerateImage] = useState(false);
+  const [mediaType, setMediaType] = useState<'none' | 'image' | 'video'>('none');
+  const [durationSeconds, setDurationSeconds] = useState(8);
 
   useEffect(() => {
     if (!context) return;
@@ -137,7 +145,8 @@ export default function ContextPanel({ connection }: { connection: Connection })
     setIntervalHours(auto.intervalHours);
     setTopicsText((auto.topics || []).join('\n'));
     setPromptHint(auto.promptHint || '');
-    setGenerateImage(!!auto.generateImage);
+    setMediaType(auto.mediaType || 'none');
+    setDurationSeconds(auto.durationSeconds || 8);
   }, [auto]);
 
   const saving =
@@ -148,7 +157,15 @@ export default function ContextPanel({ connection }: { connection: Connection })
 
   const saveScheduleFor = (contextIdToUse: string, willEnable: boolean) => {
     updateAuto.mutate(
-      { contextId: contextIdToUse, enabled: willEnable, intervalHours, topicsText, promptHint, generateImage },
+      {
+        contextId: contextIdToUse,
+        enabled: willEnable,
+        intervalHours,
+        topicsText,
+        promptHint,
+        mediaType,
+        ...(mediaType === 'video' ? { durationSeconds } : {}),
+      },
       {
         onSuccess: (res) => toast.success(res.data.auto.enabled ? 'Auto Run is ON' : 'Saved'),
         onError: (e: Error) => {
@@ -215,7 +232,8 @@ export default function ContextPanel({ connection }: { connection: Connection })
         setIntervalHours(24);
         setTopicsText('');
         setPromptHint('');
-        setGenerateImage(false);
+        setMediaType('none');
+        setDurationSeconds(8);
       },
       onError: (e: Error) => toast.error(e.message),
     });
@@ -350,24 +368,94 @@ export default function ContextPanel({ connection }: { connection: Connection })
                 className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm"
               />
             </label>
-            <label className="flex items-start gap-2 text-xs text-gray-700 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={generateImage}
-                onChange={(e) => setGenerateImage(e.target.checked)}
-                className="mt-0.5 rounded border-gray-300"
-              />
-              <span>
-                Include 1–4 AI images (picked at random) with each Auto Run post (OpenAI Images +
-                Cloudinary; billed to your OpenAI account).
-              </span>
-            </label>
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-gray-700">Media with each Auto Run post:</p>
+              <div className="flex flex-wrap gap-3 text-xs text-gray-700">
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="auto-media-type"
+                    checked={mediaType === 'none'}
+                    onChange={() => setMediaType('none')}
+                    className="border-gray-300"
+                  />
+                  None
+                </label>
+                <label
+                  className={`flex items-center gap-1.5 ${isGeminiAi ? 'opacity-50' : 'cursor-pointer'}`}
+                  title={isGeminiAi ? 'Image generation needs an OpenAI connection — Gemini covers text drafts only.' : ''}
+                >
+                  <input
+                    type="radio"
+                    name="auto-media-type"
+                    checked={mediaType === 'image'}
+                    disabled={isGeminiAi}
+                    onChange={() => setMediaType('image')}
+                    className="border-gray-300"
+                  />
+                  Image (1–4, random)
+                </label>
+                <label
+                  className={`flex items-center gap-1.5 ${!canGenerateVideo || !isGeminiAi ? 'opacity-50' : 'cursor-pointer'}`}
+                  title={
+                    !canGenerateVideo
+                      ? 'Video currently publishes to Instagram Reels only'
+                      : !isGeminiAi
+                        ? 'Video generation needs a Gemini connection — it uses Veo.'
+                        : ''
+                  }
+                >
+                  <input
+                    type="radio"
+                    name="auto-media-type"
+                    checked={mediaType === 'video'}
+                    disabled={!canGenerateVideo || !isGeminiAi}
+                    onChange={() => setMediaType('video')}
+                    className="border-gray-300"
+                  />
+                  Video (Reel)
+                </label>
+              </div>
+              {mediaType === 'video' && (
+                <div className="flex items-center gap-2 pt-1">
+                  <label className="text-xs text-gray-600">Duration:</label>
+                  <select
+                    value={durationSeconds}
+                    onChange={(e) => setDurationSeconds(Number(e.target.value))}
+                    className="px-2 py-1 rounded-lg border border-gray-200 bg-white text-xs"
+                  >
+                    {DURATION_OPTIONS.map((d) => (
+                      <option key={d} value={d}>
+                        {d}s
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <p className="text-[11px] text-[var(--sd-muted)]">
+                Image uses OpenAI Images, video uses Gemini (Veo) and publishes straight to
+                Instagram Reels — only one connected provider works at a time, matching your AI
+                Assistant connection.
+              </p>
+              {mediaType === 'video' && (
+                <p className="text-[11px] text-amber-600">
+                  Veo needs a paid Gemini plan with billing enabled — free-tier keys usually have
+                  0 Veo quota, so Auto Run would fail every scheduled cycle until billing is on.
+                  Check{' '}
+                  <a href="https://ai.dev/rate-limit" target="_blank" rel="noreferrer" className="hover:underline">
+                    ai.dev/rate-limit
+                  </a>{' '}
+                  before enabling.
+                </p>
+              )}
+            </div>
 
-            {generateImage && (
+            {mediaType !== 'none' && (
               <label className="block pl-6">
-                <span className="text-xs font-medium text-gray-600">Image context</span>
+                <span className="text-xs font-medium text-gray-600">Media style</span>
                 <p className="text-[11px] text-[var(--sd-muted)] mt-0.5 mb-1">
-                  Describe what the image should look like — AI considers this when generating it.
+                  Describe what the image or video should look like — AI considers this when
+                  generating it.
                 </p>
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {IMAGE_STYLES.map((style) => (
