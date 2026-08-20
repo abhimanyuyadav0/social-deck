@@ -12,6 +12,7 @@ import {
   useSkipVideoSeriesPart,
   useRetryVideoSeriesPart,
   usePublishVideoSeriesPartNow,
+  useUpdateVideoSeriesInterval,
 } from '@/api/services/socialDeck';
 import AutoResizeTextarea from '@/components/AutoResizeTextarea';
 
@@ -124,13 +125,18 @@ function SeriesCard({ series }: { series: VideoSeries }) {
   const skipPart = useSkipVideoSeriesPart();
   const retryPart = useRetryVideoSeriesPart();
   const publishNow = usePublishVideoSeriesPartNow();
+  const updateInterval = useUpdateVideoSeriesInterval();
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [editingInterval, setEditingInterval] = useState(false);
 
   const postedCount = series.parts.filter((p) => p.status === 'posted').length;
   const hasLiveContent = postedCount > 0;
   // The one part that would post next — only this one gets a "Publish now" button. Once it
   // posts, whichever part is pending after it becomes "next" and gets the button instead.
   const nextPendingOrder = series.parts.find((p) => p.status === 'pending')?.order;
+  // A failed part blocks anything later from publishing until it's retried or skipped — the
+  // backend enforces this too; disabling here just avoids a wasted click + error toast.
+  const blockingFailedOrder = series.parts.find((p) => p.status === 'failed')?.order;
 
   return (
     <li className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
@@ -157,8 +163,48 @@ function SeriesCard({ series }: { series: VideoSeries }) {
           </p>
           <p className="text-xs text-gray-400 mt-1">
             {series.parts.length} part{series.parts.length === 1 ? '' : 's'} · {series.segmentSeconds}s
-            target · {intervalLabel(series.intervalMinutes)} · created {formatWhen(series.createdAt)}
+            target · created {formatWhen(series.createdAt)}
           </p>
+          <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
+            <span>Post gap: {intervalLabel(series.intervalMinutes)}</span>
+            <button
+              type="button"
+              onClick={() => setEditingInterval((v) => !v)}
+              className="text-purple-600 hover:underline"
+            >
+              {editingInterval ? 'Cancel' : 'Change'}
+            </button>
+          </p>
+          {editingInterval && (
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
+              {INTERVAL_OPTIONS_MINUTES.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  disabled={updateInterval.isPending}
+                  onClick={() =>
+                    updateInterval.mutate(
+                      { id: series.id, intervalMinutes: m },
+                      {
+                        onSuccess: () => {
+                          toast.success(`Post gap set to ${intervalLabel(m)}`);
+                          setEditingInterval(false);
+                        },
+                        onError: (e: Error) => toast.error(e.message),
+                      },
+                    )
+                  }
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors disabled:opacity-50 ${
+                    series.intervalMinutes === m
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'bg-white border-gray-200 text-gray-700 hover:border-purple-300'
+                  }`}
+                >
+                  {intervalLabel(m)}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <span
           className={`text-[10px] px-2 py-0.5 rounded-full font-medium capitalize shrink-0 ${
@@ -211,8 +257,12 @@ function SeriesCard({ series }: { series: VideoSeries }) {
                 {p.status === 'pending' && p.order === nextPendingOrder && (
                   <button
                     type="button"
-                    title="Publish this part now instead of waiting for the schedule"
-                    disabled={publishNow.isPending}
+                    title={
+                      blockingFailedOrder
+                        ? `Part ${blockingFailedOrder} failed — retry or skip it first`
+                        : 'Publish this part now instead of waiting for the schedule'
+                    }
+                    disabled={publishNow.isPending || !!blockingFailedOrder}
                     onClick={() =>
                       publishNow.mutate(series.id, {
                         onSuccess: (res) => {
@@ -233,10 +283,10 @@ function SeriesCard({ series }: { series: VideoSeries }) {
                     Publish now
                   </button>
                 )}
-                {p.status === 'pending' && (
+                {(p.status === 'pending' || p.status === 'failed') && (
                   <button
                     type="button"
-                    title="Cancel this part — it won't be posted"
+                    title={p.status === 'failed' ? "Give up on this part — it won't be posted" : "Cancel this part — it won't be posted"}
                     disabled={skipPart.isPending}
                     onClick={() =>
                       skipPart.mutate(

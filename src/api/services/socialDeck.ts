@@ -489,6 +489,19 @@ export function useResumeVideoSeries() {
   });
 }
 
+/** Change the Post gap on an existing series — e.g. after Instagram's own rate limiting hit. */
+export function useUpdateVideoSeriesInterval() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, intervalMinutes }: { id: string; intervalMinutes: number }) =>
+      api<{ success: boolean; data: { series: VideoSeries } }>(
+        `/social-deck/video-series/${id}/interval`,
+        { method: 'PUT', body: JSON.stringify({ intervalMinutes }) },
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.videoSeries }),
+  });
+}
+
 /**
  * Removes the series from the active Video Reel Series list and deletes every video file this
  * app uploaded for it. The record itself is kept (not deleted) so already-posted parts still
