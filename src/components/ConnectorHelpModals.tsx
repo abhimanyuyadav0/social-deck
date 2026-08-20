@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { X, ExternalLink, Users, Linkedin, Sparkles, Youtube, Instagram } from 'lucide-react';
+import { X, ExternalLink, Users, Linkedin, Sparkles, Youtube, Instagram, Facebook } from 'lucide-react';
 
 export function DocLink({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -571,6 +571,105 @@ INSTAGRAM_REDIRECT_URI=https://api.timetofuture.com/api/social-deck/connections/
   );
 }
 
+export function FacebookGuideContent() {
+  return (
+    <div className="space-y-5">
+      <div className="flex items-start gap-2 text-blue-800 bg-blue-50 rounded-xl px-3 py-2 text-xs">
+        <Facebook className="w-4 h-4 shrink-0 mt-0.5" />
+        <span>
+          End users only need to click <strong>Connect</strong> on Facebook and sign in. It needs
+          a Facebook <strong>Page</strong> — a personal profile can&apos;t be connected. If the
+          account manages several Pages, all of them connect at once and each shows up as its own
+          card.
+        </span>
+      </div>
+
+      <Section n={1} title="Create a Meta app">
+        <p>
+          Go to the{' '}
+          <DocLink href="https://developers.facebook.com/apps">Meta for Developers</DocLink>{' '}
+          console and create an app (type: <strong>Business</strong>) — the same app used for
+          Instagram can be reused here, or a separate one if preferred.
+        </p>
+      </Section>
+
+      <Section n={2} title="Add Facebook Login for Business">
+        <p>
+          Add the <strong>Facebook Login for Business</strong> product to the app.
+        </p>
+      </Section>
+
+      <Section n={3} title="Configure the OAuth redirect URI">
+        <p>Add these OAuth redirect URIs:</p>
+        <p className="font-medium text-gray-800">Production</p>
+        <CodeBlock>https://api.timetofuture.com/api/social-deck/connections/facebook/callback</CodeBlock>
+        <p className="font-medium text-gray-800">Local development</p>
+        <CodeBlock>http://localhost:5001/api/social-deck/connections/facebook/callback</CodeBlock>
+      </Section>
+
+      <Section n={4} title="Configure permissions">
+        <p>Request these permissions (Meta App Review is required for public use beyond test users):</p>
+        <CodeBlock>{`pages_show_list
+pages_read_engagement
+pages_manage_posts`}</CodeBlock>
+      </Section>
+
+      <Section n={5} title="Configure environment variables">
+        <p>
+          Use the app&apos;s <strong>App ID</strong> and <strong>App Secret</strong> from the
+          dashboard&apos;s Settings → Basic page.
+        </p>
+        <p className="font-medium text-gray-800">Local</p>
+        <CodeBlock>{`FACEBOOK_CLIENT_ID=your_app_id
+FACEBOOK_CLIENT_SECRET=your_app_secret
+FACEBOOK_REDIRECT_URI=http://localhost:5001/api/social-deck/connections/facebook/callback`}</CodeBlock>
+        <p className="font-medium text-gray-800">Production</p>
+        <CodeBlock>{`FACEBOOK_CLIENT_ID=your_app_id
+FACEBOOK_CLIENT_SECRET=your_app_secret
+FACEBOOK_REDIRECT_URI=https://api.timetofuture.com/api/social-deck/connections/facebook/callback`}</CodeBlock>
+        <p className="text-amber-800 bg-amber-50 rounded-lg px-2 py-1.5">
+          Never expose <code>FACEBOOK_CLIENT_SECRET</code> in frontend code.
+        </p>
+      </Section>
+
+      <Section n={6} title="Account requirements">
+        <p>
+          The connecting account must be an <strong>admin, editor, moderator, or advertiser</strong>{' '}
+          on at least one Facebook Page — a personal profile alone can&apos;t be connected, and
+          Facebook&apos;s API doesn&apos;t allow posting to a personal timeline.
+        </p>
+      </Section>
+
+      <Section n={7} title="Connect as an end user">
+        <ol className="list-decimal pl-4 space-y-1">
+          <li>Open Social Deck → Connections.</li>
+          <li>
+            Click <strong>Connect</strong> on Facebook.
+          </li>
+          <li>Sign in with Facebook and approve permissions on the consent screen.</li>
+          <li>
+            You&apos;ll return to Connections with every Page you manage linked — pick one on the
+            Facebook Pages screen to publish to it.
+          </li>
+        </ol>
+      </Section>
+
+      <Section n={8} title="Official documentation">
+        <ul className="space-y-1.5">
+          <li>
+            <DocLink href="https://developers.facebook.com/docs/facebook-login/facebook-login-for-business">
+              Facebook Login for Business
+            </DocLink>
+          </li>
+          <li>
+            <DocLink href="https://developers.facebook.com/docs/pages-api">Pages API</DocLink>
+          </li>
+        </ul>
+      </Section>
+    </div>
+  );
+}
+
 export function CommunityHelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <HelpShell
@@ -645,6 +744,20 @@ export function InstagramHelpModal({ open, onClose }: { open: boolean; onClose: 
       subtitle="Time To Future — developer app configuration for Social Deck"
     >
       <InstagramGuideContent />
+    </HelpShell>
+  );
+}
+
+export function FacebookHelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <HelpShell
+      open={open}
+      onClose={onClose}
+      wide
+      title="Facebook (Meta) Setup"
+      subtitle="Time To Future — developer app configuration for Social Deck"
+    >
+      <FacebookGuideContent />
     </HelpShell>
   );
 }

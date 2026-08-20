@@ -14,6 +14,7 @@ export const PLATFORM_LABEL: Record<PlatformType, string> = {
   instagram: 'Instagram',
   youtube: 'YouTube',
   community: 'Community',
+  facebook: 'Facebook',
 };
 
 function ConfirmDisconnectModal({

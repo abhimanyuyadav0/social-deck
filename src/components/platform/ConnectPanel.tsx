@@ -1,21 +1,23 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'glintly-ui';
-import { Users, Linkedin, Youtube, Instagram, ExternalLink, X, CircleAlert } from 'lucide-react';
+import { Users, Linkedin, Youtube, Instagram, Facebook, ExternalLink, X, CircleAlert } from 'lucide-react';
 import {
   useConnectCommunity,
   useStartLinkedInConnect,
   useStartYouTubeConnect,
   useStartInstagramConnect,
+  useStartFacebookConnect,
 } from '@/api/services/socialDeck';
 import {
   CommunityHelpModal,
   LinkedInHelpModal,
   YouTubeHelpModal,
   InstagramHelpModal,
+  FacebookHelpModal,
 } from '@/components/ConnectorHelpModals';
 
-export type PlatformType = 'linkedin' | 'instagram' | 'youtube' | 'community';
+export type PlatformType = 'linkedin' | 'instagram' | 'youtube' | 'community' | 'facebook';
 
 const PLATFORM_META: Record<
   PlatformType,
@@ -51,6 +53,13 @@ const PLATFORM_META: Record<
     iconColor: 'text-orange-600',
     description: 'Get a developer key from Community → Developer, then paste it here to connect.',
   },
+  facebook: {
+    label: 'Facebook',
+    icon: Facebook,
+    iconBg: 'bg-blue-100',
+    iconColor: 'text-blue-700',
+    description: 'Authorize with Facebook to publish text and photo posts to a Page you manage.',
+  },
 };
 
 const HELP_MODALS = {
@@ -58,6 +67,7 @@ const HELP_MODALS = {
   youtube: YouTubeHelpModal,
   instagram: InstagramHelpModal,
   community: CommunityHelpModal,
+  facebook: FacebookHelpModal,
 };
 
 function ConnectCommunityModal({
@@ -148,6 +158,7 @@ export default function ConnectPanel({ type }: { type: PlatformType }) {
   const startLinkedIn = useStartLinkedInConnect();
   const startYouTube = useStartYouTubeConnect();
   const startInstagram = useStartInstagramConnect();
+  const startFacebook = useStartFacebookConnect();
 
   const [showCommunityModal, setShowCommunityModal] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -180,9 +191,16 @@ export default function ConnectPanel({ type }: { type: PlatformType }) {
     );
   };
 
+  const oauthMutations = {
+    linkedin: startLinkedIn,
+    youtube: startYouTube,
+    instagram: startInstagram,
+    facebook: startFacebook,
+  } as const;
+
   const startOAuth = () => {
-    const mutation =
-      type === 'linkedin' ? startLinkedIn : type === 'youtube' ? startYouTube : startInstagram;
+    if (type === 'community') return;
+    const mutation = oauthMutations[type];
     mutation.mutate(undefined, {
       onSuccess: (res) => {
         const url = res?.data?.url;
@@ -196,7 +214,11 @@ export default function ConnectPanel({ type }: { type: PlatformType }) {
     });
   };
 
-  const connecting = startLinkedIn.isPending || startYouTube.isPending || startInstagram.isPending;
+  const connecting =
+    startLinkedIn.isPending ||
+    startYouTube.isPending ||
+    startInstagram.isPending ||
+    startFacebook.isPending;
 
   return (
     <div className="max-w-xl mx-auto mt-10">

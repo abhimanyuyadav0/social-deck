@@ -10,6 +10,8 @@ import DashboardPage from '@/pages/DashboardPage';
 import PlatformPage from '@/pages/PlatformPage';
 import InstagramAccountsPage from '@/pages/InstagramAccountsPage';
 import InstagramDetailPage from '@/pages/InstagramDetailPage';
+import FacebookPagesPage from '@/pages/FacebookPagesPage';
+import FacebookDetailPage from '@/pages/FacebookDetailPage';
 import DocsPage from '@/pages/DocsPage';
 
 export default function App() {
@@ -32,6 +34,8 @@ export default function App() {
           <Route path="linkedin" element={<PlatformPage type="linkedin" />} />
           <Route path="instagram" element={<InstagramAccountsPage />} />
           <Route path="instagram/:connectionId" element={<InstagramDetailPage />} />
+          <Route path="facebook" element={<FacebookPagesPage />} />
+          <Route path="facebook/:connectionId" element={<FacebookDetailPage />} />
           <Route path="youtube" element={<PlatformPage type="youtube" />} />
           <Route path="community" element={<PlatformPage type="community" />} />
           <Route path="docs" element={<DocsPage />} />

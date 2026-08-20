@@ -10,8 +10,9 @@ const CONNECTION_TYPE: Record<PlatformType, string> = {
   community: 'ttf_community',
 };
 
-/** Single-account platform page (LinkedIn/YouTube/Community). Instagram uses its own
- * multi-account list + detail pages instead (InstagramAccountsPage/InstagramDetailPage). */
+/** Single-account platform page (LinkedIn/YouTube/Community). Instagram and Facebook use their
+ * own multi-account list + detail pages instead (InstagramAccountsPage/InstagramDetailPage,
+ * FacebookPagesPage/FacebookDetailPage) since a user can manage several accounts/Pages. */
 export default function PlatformPage({ type }: { type: PlatformType }) {
   const { data, isLoading } = useConnections();
 

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Link2, Users, Instagram, Linkedin, Youtube } from 'lucide-react';
+import { Link2, Users, Instagram, Facebook, Linkedin, Youtube } from 'lucide-react';
 import { useConnections, usePlatforms, usePosts } from '@/api/services/socialDeck';
 import DonutChart from '@/components/charts/DonutChart';
 import MiniBarChart from '@/components/charts/MiniBarChart';
@@ -13,6 +13,7 @@ const PLATFORM_ROUTE: Record<string, string> = {
   linkedin: '/linkedin',
   youtube: '/youtube',
   instagram: '/instagram',
+  facebook: '/facebook',
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -49,6 +50,7 @@ export default function DashboardPage() {
     if (id.includes('community')) return Users;
     if (id.includes('linkedin')) return Linkedin;
     if (id.includes('instagram')) return Instagram;
+    if (id.includes('facebook')) return Facebook;
     if (id.includes('youtube')) return Youtube;
     return Link2;
   };
