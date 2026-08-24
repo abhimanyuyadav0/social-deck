@@ -21,6 +21,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   const storedToken = getStoredToken();
   const authValue = storedToken && shouldEncrypt() ? base64urlEncode(storedToken) : storedToken;
   const headers: HeadersInit = {
+    'X-Client': 'social-deck',
     ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(options.headers as Record<string, string>),
   };
