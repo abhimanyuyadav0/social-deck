@@ -24,7 +24,6 @@ const IMAGE_STYLES = [
   'Cinematic dark',
 ];
 
-const DURATION_OPTIONS = [5, 6, 7, 8];
 
 function formatWhen(iso?: string | null) {
   if (!iso) return '—';
@@ -150,9 +149,10 @@ export default function ContextPanel({ connection }: { connection: Connection })
     'veo-3.1-fast-generate-preview',
     'veo-3.1-lite-generate-preview',
   ];
+  const videoDurationOptions = autoRunData?.data?.videoDurationOptions ?? [8, 15, 22, 29];
   const ai = aiData?.data?.ai;
   const isGeminiAi = ai?.provider === 'gemini';
-  const canGenerateVideo = connection.type === 'instagram';
+  const canGenerateVideo = connection.type === 'instagram' || connection.type === 'facebook';
 
   const [showDelete, setShowDelete] = useState(false);
   const [enabled, setEnabled] = useState(false);
@@ -443,7 +443,7 @@ export default function ContextPanel({ connection }: { connection: Connection })
                   className={`flex items-center gap-1.5 ${!canGenerateVideo || !isGeminiAi ? 'opacity-50' : 'cursor-pointer'}`}
                   title={
                     !canGenerateVideo
-                      ? 'Video currently publishes to Instagram Reels only'
+                      ? 'Video currently publishes to Instagram Reels or Facebook Page video only'
                       : !isGeminiAi
                         ? 'Video generation needs a Gemini connection — it uses Veo.'
                         : ''
@@ -457,7 +457,7 @@ export default function ContextPanel({ connection }: { connection: Connection })
                     onChange={() => setMediaType('video')}
                     className="border-gray-300"
                   />
-                  Video (Reel)
+                  Video (Reel / Page video)
                 </label>
               </div>
               {mediaType === 'image' && (
@@ -495,29 +495,35 @@ export default function ContextPanel({ connection }: { connection: Connection })
               {mediaType === 'video' && (
                 <div className="flex items-center gap-2 pt-1">
                   <label className="text-xs text-gray-600">Duration:</label>
-                  <select
-                    value={durationSeconds}
-                    onChange={(e) => setDurationSeconds(Number(e.target.value))}
-                    className="px-2 py-1 rounded-lg border border-gray-200 bg-white text-xs"
-                  >
-                    {DURATION_OPTIONS.map((d) => (
-                      <option key={d} value={d}>
+                  <div className="flex flex-wrap gap-1.5">
+                    {videoDurationOptions.map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setDurationSeconds(d)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                          durationSeconds === d
+                            ? 'bg-purple-600 text-white border-purple-600'
+                            : 'bg-white border-gray-200 text-gray-700 hover:border-purple-300'
+                        }`}
+                      >
                         {d}s
-                      </option>
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
               )}
               <p className="text-[11px] text-[var(--sd-muted)]">
                 Image works with either OpenAI or Gemini (Nano Banana) — whichever provider is
-                connected. Video always uses Gemini (Veo) and publishes straight to Instagram
-                Reels, capped at 8s per generation regardless of model.
+                connected. Video always uses Gemini (Veo) and publishes to Instagram Reels or
+                Facebook Page video. A single Veo call only produces 8s — longer durations chain
+                "extend" calls in ~7s steps (15s = 2 Veo requests, 22s = 3, 29s = 4).
               </p>
               {mediaType === 'video' && (
                 <p className="text-[11px] text-amber-600">
                   Veo needs a paid Gemini plan with billing enabled — free-tier keys usually have
                   0 Veo quota, so Auto Run would fail every scheduled cycle until billing is on.
-                  Check{' '}
+                  Longer durations use proportionally more of your daily Veo quota per post. Check{' '}
                   <a href="https://ai.dev/rate-limit" target="_blank" rel="noreferrer" className="hover:underline">
                     ai.dev/rate-limit
                   </a>{' '}

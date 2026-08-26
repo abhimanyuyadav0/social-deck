@@ -329,6 +329,7 @@ export function useAutoRun() {
           intervalOptions: number[];
           imageModelOptions: string[];
           videoModelOptions: string[];
+          videoDurationOptions: number[];
         };
       }>('/social-deck/auto-run'),
     // The cron that runs these ticks every 15 min server-side, independent of this page being
