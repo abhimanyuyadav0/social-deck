@@ -81,7 +81,7 @@ export function AuthShell({
                 <span className="block text-purple-600 mt-1">Everywhere you publish.</span>
               </p>
               <p className="mt-4 text-[var(--sd-muted)] text-base leading-relaxed">
-                Social Deck is a Time To Future product that lets you connect your social and
+                Social Deck is a Time To Future Pvt. Ltd. product that lets you connect your social and
                 Community accounts, draft posts with AI, and keep a steady posting rhythm — without
                 copy-pasting the same update across apps.
               </p>
@@ -108,7 +108,7 @@ export function AuthShell({
           </div>
 
           <p className="text-xs text-[var(--sd-muted)]">
-            A Time To Future product · Separate account from Community / HRMS
+            A Time To Future Pvt. Ltd. product · Separate account from Community / HRMS
           </p>
         </aside>
 

@@ -21,7 +21,7 @@ const features = [
 
 const dataUse = [
   {
-    platform: 'Community by Time To Future',
+    platform: 'Community by Time To Future Pvt. Ltd.',
     reason:
       'You paste a developer key you create yourself. We use it only to publish posts under your Community profile — nothing else.',
   },
@@ -108,7 +108,7 @@ export default function LandingPage() {
               publishing content across your connected social accounts.
             </p>
             <p className="mt-3 text-sm text-[var(--sd-muted)]">
-              Social Deck is a product by Time To Future.
+              Social Deck is a product by Time To Future Pvt. Ltd.
             </p>
             <p className="mt-6 text-base text-[var(--sd-muted)] leading-relaxed max-w-xl">
               Connect Community, LinkedIn, YouTube, and Instagram, draft posts with AI in your own
@@ -176,7 +176,7 @@ export default function LandingPage() {
 
         <footer className="max-w-5xl mx-auto px-4 sm:px-8 pb-10">
           <p className="text-xs text-[var(--sd-muted)]">
-            A Time To Future product · Separate account from Community / HRMS
+            A Time To Future Pvt. Ltd. product · Separate account from Community / HRMS
           </p>
           <p className="text-xs text-[var(--sd-muted)] mt-2">
             <a

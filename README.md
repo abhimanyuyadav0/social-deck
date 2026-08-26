@@ -1,6 +1,6 @@
 # Social Deck
 
-Publish social posts to **Time To Future Community** today. LinkedIn & Instagram coming soon.
+Publish social posts to **Time To Future Pvt. Ltd. Community** today. LinkedIn & Instagram coming soon.
 
 Third-party platforms can integrate via **Developer API** (`sp_` API keys) and **webhook connections**.
 

@@ -168,7 +168,7 @@ export function LinkedInGuideContent() {
             Click <strong>Create App</strong>.
           </li>
           <li>
-            Enter App Name: <code className="text-sky-800">Time To Future</code>, LinkedIn Page, and
+            Enter App Name: <code className="text-sky-800">Time To Future Pvt. Ltd.</code>, LinkedIn Page, and
             App Logo.
           </li>
           <li>Create the application.</li>
@@ -180,7 +180,7 @@ export function LinkedInGuideContent() {
 
       <Section n={2} title="Enable Required Products">
         <p>
-          Open <strong>My Apps → Time To Future → Products</strong> and enable:
+          Open <strong>My Apps → Time To Future Pvt. Ltd. → Products</strong> and enable:
         </p>
         <div className="grid sm:grid-cols-2 gap-2">
           <div className="rounded-xl border border-gray-100 p-3 space-y-1">
@@ -201,7 +201,7 @@ email`}</CodeBlock>
 
       <Section n={3} title="Configure Redirect URLs">
         <p>
-          Go to <strong>Time To Future → Auth</strong>. Under Authorized redirect URLs, add:
+          Go to <strong>Time To Future Pvt. Ltd. → Auth</strong>. Under Authorized redirect URLs, add:
         </p>
         <p className="font-medium text-gray-800">Production</p>
         <CodeBlock>
@@ -713,7 +713,7 @@ export function LinkedInHelpModal({ open, onClose }: { open: boolean; onClose: (
       onClose={onClose}
       wide
       title="LinkedIn OAuth 2.0 Setup"
-      subtitle="Time To Future — developer app configuration for Social Deck"
+      subtitle="Time To Future Pvt. Ltd. — developer app configuration for Social Deck"
     >
       <LinkedInGuideContent />
     </HelpShell>
@@ -727,7 +727,7 @@ export function YouTubeHelpModal({ open, onClose }: { open: boolean; onClose: ()
       onClose={onClose}
       wide
       title="YouTube OAuth 2.0 Setup"
-      subtitle="Time To Future — developer app configuration for Social Deck"
+      subtitle="Time To Future Pvt. Ltd. — developer app configuration for Social Deck"
     >
       <YouTubeGuideContent />
     </HelpShell>
@@ -741,7 +741,7 @@ export function InstagramHelpModal({ open, onClose }: { open: boolean; onClose: 
       onClose={onClose}
       wide
       title="Instagram (Meta) Setup"
-      subtitle="Time To Future — developer app configuration for Social Deck"
+      subtitle="Time To Future Pvt. Ltd. — developer app configuration for Social Deck"
     >
       <InstagramGuideContent />
     </HelpShell>
@@ -755,7 +755,7 @@ export function FacebookHelpModal({ open, onClose }: { open: boolean; onClose: (
       onClose={onClose}
       wide
       title="Facebook (Meta) Setup"
-      subtitle="Time To Future — developer app configuration for Social Deck"
+      subtitle="Time To Future Pvt. Ltd. — developer app configuration for Social Deck"
     >
       <FacebookGuideContent />
     </HelpShell>
