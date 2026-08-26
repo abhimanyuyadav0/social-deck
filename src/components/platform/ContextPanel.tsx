@@ -38,7 +38,31 @@ function formatWhen(iso?: string | null) {
 function intervalLabel(hours: number) {
   if (hours === 24) return 'Every day (24 hours)';
   if (hours === 1) return 'Every 1 hour';
+  if (hours > 24 && hours % 24 === 0) {
+    const days = hours / 24;
+    return `Every ${days} days`;
+  }
   return `Every ${hours} hours`;
+}
+
+const IMAGE_MODEL_LABELS: Record<string, string> = {
+  'gemini-3.1-flash-lite-image': 'Nano Banana 2 Lite (fastest, cheapest)',
+  'gemini-3.1-flash-image': 'Nano Banana 2 (balanced)',
+  'gemini-3-pro-image': 'Nano Banana Pro (best quality)',
+};
+
+function imageModelLabel(model: string) {
+  return IMAGE_MODEL_LABELS[model] || model;
+}
+
+const VIDEO_MODEL_LABELS: Record<string, string> = {
+  'veo-3.1-generate-preview': 'Veo 3.1 (best quality)',
+  'veo-3.1-fast-generate-preview': 'Veo 3.1 Fast (cheaper, quicker)',
+  'veo-3.1-lite-generate-preview': 'Veo 3.1 Lite (cheapest)',
+};
+
+function videoModelLabel(model: string) {
+  return VIDEO_MODEL_LABELS[model] || model;
 }
 
 function ConfirmDeleteModal({
@@ -108,7 +132,24 @@ export default function ContextPanel({ connection }: { connection: Connection })
   const auto = connection.contextId
     ? autoRunData?.data?.autoRuns.find((a) => a.contextId === connection.contextId)
     : undefined;
-  const intervalOptions = autoRunData?.data?.intervalOptions ?? [1, 2, 3, 4, 6, 8, 12, 24];
+  const intervalOptions = Array.from(
+    new Set([
+      ...(autoRunData?.data?.intervalOptions ?? [1, 2, 3, 4, 6, 8, 12, 24]),
+      72,
+      144,
+      240,
+    ]),
+  ).sort((a, b) => a - b);
+  const imageModelOptions = autoRunData?.data?.imageModelOptions ?? [
+    'gemini-3.1-flash-lite-image',
+    'gemini-3.1-flash-image',
+    'gemini-3-pro-image',
+  ];
+  const videoModelOptions = autoRunData?.data?.videoModelOptions ?? [
+    'veo-3.1-generate-preview',
+    'veo-3.1-fast-generate-preview',
+    'veo-3.1-lite-generate-preview',
+  ];
   const ai = aiData?.data?.ai;
   const isGeminiAi = ai?.provider === 'gemini';
   const canGenerateVideo = connection.type === 'instagram';
@@ -128,6 +169,8 @@ export default function ContextPanel({ connection }: { connection: Connection })
   const [promptHint, setPromptHint] = useState('');
   const [mediaType, setMediaType] = useState<'none' | 'image' | 'video'>('none');
   const [durationSeconds, setDurationSeconds] = useState(8);
+  const [imageModel, setImageModel] = useState('gemini-3.1-flash-lite-image');
+  const [videoModel, setVideoModel] = useState('veo-3.1-generate-preview');
 
   useEffect(() => {
     if (!context) return;
@@ -147,6 +190,8 @@ export default function ContextPanel({ connection }: { connection: Connection })
     setPromptHint(auto.promptHint || '');
     setMediaType(auto.mediaType || 'none');
     setDurationSeconds(auto.durationSeconds || 8);
+    setImageModel(auto.imageModel || 'gemini-3.1-flash-lite-image');
+    setVideoModel(auto.videoModel || 'veo-3.1-generate-preview');
   }, [auto]);
 
   const saving =
@@ -164,7 +209,8 @@ export default function ContextPanel({ connection }: { connection: Connection })
         topicsText,
         promptHint,
         mediaType,
-        ...(mediaType === 'video' ? { durationSeconds } : {}),
+        ...(mediaType === 'image' ? { imageModel } : {}),
+        ...(mediaType === 'video' ? { durationSeconds, videoModel } : {}),
       },
       {
         onSuccess: (res) => toast.success(res.data.auto.enabled ? 'Auto Run is ON' : 'Saved'),
@@ -234,6 +280,8 @@ export default function ContextPanel({ connection }: { connection: Connection })
         setPromptHint('');
         setMediaType('none');
         setDurationSeconds(8);
+        setImageModel('gemini-3.1-flash-lite-image');
+        setVideoModel('veo-3.1-generate-preview');
       },
       onError: (e: Error) => toast.error(e.message),
     });
@@ -381,15 +429,11 @@ export default function ContextPanel({ connection }: { connection: Connection })
                   />
                   None
                 </label>
-                <label
-                  className={`flex items-center gap-1.5 ${isGeminiAi ? 'opacity-50' : 'cursor-pointer'}`}
-                  title={isGeminiAi ? 'Image generation needs an OpenAI connection — Gemini covers text drafts only.' : ''}
-                >
+                <label className="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
                     name="auto-media-type"
                     checked={mediaType === 'image'}
-                    disabled={isGeminiAi}
                     onChange={() => setMediaType('image')}
                     className="border-gray-300"
                   />
@@ -416,6 +460,38 @@ export default function ContextPanel({ connection }: { connection: Connection })
                   Video (Reel)
                 </label>
               </div>
+              {mediaType === 'image' && (
+                <div className="flex items-center gap-2 pt-1">
+                  <label className="text-xs text-gray-600">Model:</label>
+                  <select
+                    value={imageModel}
+                    onChange={(e) => setImageModel(e.target.value)}
+                    className="px-2 py-1 rounded-lg border border-gray-200 bg-white text-xs"
+                  >
+                    {imageModelOptions.map((m) => (
+                      <option key={m} value={m}>
+                        {imageModelLabel(m)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {mediaType === 'video' && (
+                <div className="flex items-center gap-2 pt-1">
+                  <label className="text-xs text-gray-600">Model:</label>
+                  <select
+                    value={videoModel}
+                    onChange={(e) => setVideoModel(e.target.value)}
+                    className="px-2 py-1 rounded-lg border border-gray-200 bg-white text-xs"
+                  >
+                    {videoModelOptions.map((m) => (
+                      <option key={m} value={m}>
+                        {videoModelLabel(m)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               {mediaType === 'video' && (
                 <div className="flex items-center gap-2 pt-1">
                   <label className="text-xs text-gray-600">Duration:</label>
@@ -433,9 +509,9 @@ export default function ContextPanel({ connection }: { connection: Connection })
                 </div>
               )}
               <p className="text-[11px] text-[var(--sd-muted)]">
-                Image uses OpenAI Images, video uses Gemini (Veo) and publishes straight to
-                Instagram Reels — only one connected provider works at a time, matching your AI
-                Assistant connection.
+                Image works with either OpenAI or Gemini (Nano Banana) — whichever provider is
+                connected. Video always uses Gemini (Veo) and publishes straight to Instagram
+                Reels, capped at 8s per generation regardless of model.
               </p>
               {mediaType === 'video' && (
                 <p className="text-[11px] text-amber-600">

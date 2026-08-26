@@ -102,7 +102,7 @@ function ConnectAiModal({
           </div>
           {provider === 'gemini' && (
             <p className="text-[11px] text-amber-600 mt-1.5">
-              Text drafts only for now — image generation still needs an OpenAI connection.
+              Gemini covers text, image (Nano Banana), and video (Veo) generation.
             </p>
           )}
         </div>

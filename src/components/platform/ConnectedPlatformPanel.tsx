@@ -5,7 +5,6 @@ import { ArrowLeft, Trash2 } from 'lucide-react';
 import { type Connection, useDisconnectConnection } from '@/api/services/socialDeck';
 import type { PlatformType } from '@/components/platform/ConnectPanel';
 import ContextPanel from '@/components/platform/ContextPanel';
-import ComposeSection from '@/components/platform/ComposeSection';
 import PostHistorySection from '@/components/platform/PostHistorySection';
 import VideoSeriesSection from '@/components/platform/VideoSeriesSection';
 
@@ -66,10 +65,7 @@ function PlatformTabs({ connection, type }: { connection: Connection; type: Plat
   const tabs = [
     { id: 'briefing', label: 'Briefing & Auto Run', content: <ContextPanel connection={connection} /> },
     ...(type !== 'youtube'
-      ? [
-          { id: 'compose', label: 'Photo & Text Post', content: <ComposeSection connection={connection} /> },
-          { id: 'posts', label: 'Post history', content: <PostHistorySection connection={connection} /> },
-        ]
+      ? [{ id: 'posts', label: 'Post history', content: <PostHistorySection connection={connection} /> }]
       : []),
     ...(type === 'instagram'
       ? [{ id: 'video-series', label: 'Video Reel Series', content: <VideoSeriesSection connection={connection} /> }]

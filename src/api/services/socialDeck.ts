@@ -67,7 +67,6 @@ const keys = {
   aiContexts: ['social-deck', 'ai-contexts'] as const,
   autoRun: ['social-deck', 'auto-run'] as const,
   videoSeries: ['social-deck', 'video-series'] as const,
-  videoGenerations: (connectionId: string) => ['social-deck', 'video-generations', connectionId] as const,
 };
 
 export type AiProvider = 'openai' | 'gemini';
@@ -95,15 +94,6 @@ export type AiContext = {
   updatedAt?: string;
 };
 
-export type GeneratedPost = {
-  title: string;
-  content: string;
-  category: string;
-  tags: string[];
-  images: string[];
-  videoJob?: VideoGenerationJob | null;
-};
-
 export type AutoRunConfig = {
   contextId: string;
   contextName: string;
@@ -114,6 +104,8 @@ export type AutoRunConfig = {
   promptHint: string;
   mediaType?: 'none' | 'image' | 'video';
   durationSeconds?: number;
+  imageModel?: string;
+  videoModel?: string;
   nextRunAt?: string | null;
   lastRunAt?: string | null;
   lastError?: string;
@@ -314,38 +306,6 @@ export function useDisconnectAi() {
   });
 }
 
-export function useGenerateWithAi() {
-  return useMutation({
-    mutationFn: (body: {
-      prompt: string;
-      connectionIds: string[];
-      mediaType?: 'none' | 'image' | 'video';
-      durationSeconds?: number;
-    }) =>
-      api<{ success: boolean; data: { post: GeneratedPost } }>('/social-deck/ai/generate', {
-        method: 'POST',
-        body: JSON.stringify(body),
-      }),
-  });
-}
-
-export function useCreatePost() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (body: {
-      title: string;
-      content: string;
-      images?: string[];
-      category?: string;
-      tags?: string[];
-      connectionIds: string[];
-      publish?: boolean;
-    }) =>
-      api('/social-deck/posts', { method: 'POST', body: JSON.stringify(body) }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.posts }),
-  });
-}
-
 export function usePublishPost() {
   const qc = useQueryClient();
   return useMutation({
@@ -364,7 +324,12 @@ export function useAutoRun() {
     queryFn: () =>
       api<{
         success: boolean;
-        data: { autoRuns: AutoRunConfig[]; intervalOptions: number[] };
+        data: {
+          autoRuns: AutoRunConfig[];
+          intervalOptions: number[];
+          imageModelOptions: string[];
+          videoModelOptions: string[];
+        };
       }>('/social-deck/auto-run'),
     // The cron that runs these ticks every 15 min server-side, independent of this page being
     // open — poll while the page is open so status/next-run stay current without a manual reload.
@@ -576,46 +541,3 @@ export function usePublishVideoSeriesPartNow() {
   });
 }
 
-// --- AI video generation (Gemini/Veo -> Instagram Reels) ---
-
-export type VideoGenerationJob = {
-  id: string;
-  connectionId: string;
-  prompt: string;
-  caption: string;
-  status: 'generating' | 'ready' | 'publishing' | 'published' | 'failed';
-  videoUrl: string;
-  externalUrl: string;
-  error: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
-/** Polls while any job is still generating/publishing — stops once everything's settled. */
-export function useVideoGenerations(connectionId: string | undefined) {
-  return useQuery({
-    queryKey: keys.videoGenerations(connectionId ?? ''),
-    queryFn: () =>
-      api<{ success: boolean; data: { jobs: VideoGenerationJob[] } }>(
-        `/social-deck/video-generations?connectionId=${connectionId}`,
-      ),
-    enabled: !!connectionId,
-    refetchInterval: (query) => {
-      const jobs = query.state.data?.data.jobs ?? [];
-      const inFlight = jobs.some((j) => j.status === 'generating' || j.status === 'publishing');
-      return inFlight ? 5000 : false;
-    },
-  });
-}
-
-export function usePublishVideoGeneration(connectionId: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (jobId: string) =>
-      api<{ success: boolean; data: { job: VideoGenerationJob } }>(
-        `/social-deck/video-generations/${jobId}/publish`,
-        { method: 'POST', body: JSON.stringify({}) },
-      ),
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.videoGenerations(connectionId) }),
-  });
-}
