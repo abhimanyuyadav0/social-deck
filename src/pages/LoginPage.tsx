@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { Loader2, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
+import { Button } from 'glintly-ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthShell, AuthField } from '@/components/AuthShell';
 import { startTtfSignIn } from '@/utils/ttfSso';
@@ -75,13 +76,15 @@ export default function LoginPage() {
           placeholder="Your password"
         />
 
-        <button
+        <Button
           type="submit"
-          disabled={busy}
-          className="w-full mt-1 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 active:scale-[0.99] transition disabled:opacity-60 flex items-center justify-center gap-2 shadow-md shadow-purple-600/20"
+          variant="primary"
+          fullWidth
+          loading={busy}
+          className="mt-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold shadow-md shadow-purple-600/20"
         >
-          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign in'}
-        </button>
+          Sign in
+        </Button>
 
         <div className="relative py-1">
           <div className="absolute inset-0 flex items-center">
@@ -94,14 +97,17 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="lg"
+          fullWidth
+          loading={ssoLoading}
           onClick={onSsoSignIn}
-          disabled={ssoLoading}
-          className="w-full py-2.5 rounded-xl border border-purple-200 bg-white text-[var(--sd-ink)] text-sm font-semibold hover:bg-purple-50 active:scale-[0.99] transition disabled:opacity-60 flex items-center justify-center gap-2"
+          className="py-2.5 rounded-xl border-purple-200 bg-white text-[var(--sd-ink)] text-sm font-semibold hover:bg-purple-50"
         >
-          {ssoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign in with TTF Account'}
-        </button>
+          Sign in with TTF Account
+        </Button>
 
         <p className="text-center text-xs text-[var(--sd-muted)] pt-1">
           New to Social Deck?{' '}

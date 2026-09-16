@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { Loader2, Mail } from 'lucide-react';
-import { toast } from 'glintly-ui';
+import { Mail } from 'lucide-react';
+import { Button, toast } from 'glintly-ui';
 import { register } from '@/api/services/auth';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthShell, AuthField } from '@/components/AuthShell';
@@ -71,13 +71,15 @@ export default function SignupPage() {
           >
             Go to sign in
           </Link>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => setDone(false)}
-            className="text-xs text-purple-700 font-medium hover:underline"
+            className="text-xs text-purple-700 font-medium hover:underline hover:bg-purple-50"
           >
             Use a different email
-          </button>
+          </Button>
         </div>
       ) : (
         <form onSubmit={onSubmit} className="space-y-4">
@@ -117,13 +119,16 @@ export default function SignupPage() {
             hint="Min 6 characters"
           />
 
-          <button
+          <Button
             type="submit"
-            disabled={busy}
-            className="w-full mt-1 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 active:scale-[0.99] transition disabled:opacity-60 flex items-center justify-center gap-2 shadow-md shadow-purple-600/20"
+            variant="primary"
+            size="lg"
+            fullWidth
+            loading={busy}
+            className="mt-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold shadow-md shadow-purple-600/20"
           >
-            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create account'}
-          </button>
+            Create account
+          </Button>
 
           <p className="text-center text-xs text-[var(--sd-muted)] pt-1">
             Already have an account?{' '}
