@@ -1,7 +1,7 @@
 // "Sign in with TTF" — starts the central OAuth2/PKCE login at master-backend.
 // See master-backend/docs/sso-integration.md for the full flow.
 
-export const TTF_SSO_CLIENT_ID = 'social-deck';
+export const TTF_SSO_CLIENT_ID = 'social-deck-81cad6';
 export const TTF_SSO_CALLBACK_PATH = '/auth/ttf/callback';
 
 const PKCE_VERIFIER_KEY = 'ttf_sso_pkce_verifier';
