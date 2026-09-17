@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { toast } from 'glintly-ui';
-import { RotateCcw, Loader2, Film } from 'lucide-react';
+import { RotateCcw, Loader2, Film, Share2, Copy, Check, AlertCircle, Edit3 } from 'lucide-react';
+import CrossPostModal from './CrossPostModal';
+import { EditPostModal } from './EditPostModal';
 import {
   type Connection,
   type SocialPost,
@@ -83,6 +85,9 @@ export default function PostHistorySection({ connection }: { connection: Connect
   const { data: seriesData, isLoading: isLoadingSeries } = useVideoSeriesList();
   const publishPost = usePublishPost();
   const [retryingKey, setRetryingKey] = useState<string | null>(null);
+  const [crossPostTarget, setCrossPostTarget] = useState<SocialPost | null>(null);
+  const [editingPost, setEditingPost] = useState<SocialPost | null>(null);
+  const [copiedPostId, setCopiedPostId] = useState<string | null>(null);
 
   const posts = (data?.data?.posts ?? []).filter(
     (p) =>
@@ -133,6 +138,16 @@ export default function PostHistorySection({ connection }: { connection: Connect
 
   return (
     <div className="space-y-4">
+      <CrossPostModal
+        post={crossPostTarget}
+        onClose={() => setCrossPostTarget(null)}
+      />
+      <EditPostModal
+        open={!!editingPost}
+        post={editingPost}
+        onClose={() => setEditingPost(null)}
+        targetConnectionId={connection.id}
+      />
       <h2 className="sd-display text-lg font-bold text-[var(--sd-ink)]">Post history</h2>
       {loading ? (
         <div className="space-y-3">
@@ -177,6 +192,12 @@ export default function PostHistorySection({ connection }: { connection: Connect
                             +{item.post.images.length - 3}
                           </span>
                         )}
+                      </div>
+                    )}
+                    {item.post.videoUrl && (
+                      <div className="w-14 h-14 rounded-lg bg-slate-900 text-white flex flex-col items-center justify-center border-2 border-white shadow-sm shrink-0">
+                        <Film className="w-5 h-5 text-indigo-400" />
+                        <span className="text-[9px] font-bold text-slate-300 uppercase mt-0.5">Video</span>
                       </div>
                     )}
                     <span className={`sd-badge ${STATUS_STYLE[item.post.status] ?? STATUS_STYLE.draft}`}>
@@ -239,23 +260,107 @@ export default function PostHistorySection({ connection }: { connection: Connect
                       </div>
                     );
                   })}
-                {item.post.status === 'draft' && (item.post.targetConnectionIds?.length ?? 0) > 0 && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      publishPost.mutate(
-                        { id: item.post.id },
-                        {
-                          onSuccess: () => toast.success('Published'),
-                          onError: (e: Error) => toast.error(e.message),
-                        },
-                      )
-                    }
-                    className="mt-3 text-xs font-semibold text-purple-600 hover:underline"
-                  >
-                    Publish now
-                  </button>
-                )}
+                {/* Special guidance banner if Instagram failed due to missing image */}
+                {connection.type === 'instagram' &&
+                  item.post.results?.some(
+                    (r) =>
+                      r.connectionId === connection.id &&
+                      r.status === 'failed' &&
+                      (r.error?.toLowerCase().includes('image') ||
+                        r.error?.toLowerCase().includes('media')),
+                  ) && (
+                    <div className="mt-2.5 p-3 rounded-xl bg-amber-50/90 border border-amber-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-900">
+                      <div className="flex items-start sm:items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
+                        <span>
+                          Instagram requires an image or video! Add media to post to Instagram, or cross-post this text to other platforms.
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setEditingPost(item.post)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-bold hover:bg-indigo-700 text-xs shadow-xs transition-colors"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          Add Image / Video
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCrossPostTarget(item.post)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 text-white font-bold hover:bg-amber-700 text-xs shadow-xs transition-colors"
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                          Cross-post now
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                {/* Reuse & Cross-Post Action Bar */}
+                <div className="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => setEditingPost(item.post)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 transition-colors shadow-2xs"
+                    >
+                      <Edit3 className="w-3.5 h-3.5 text-indigo-600" />
+                      Edit Post / Media
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCrossPostTarget(item.post)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200/80 transition-colors shadow-2xs"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      Cross-post / Reuse
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(
+                          `${item.post.title}\n\n${item.post.content}`.trim(),
+                        );
+                        setCopiedPostId(item.post.id);
+                        toast.success('Post text copied');
+                        setTimeout(() => setCopiedPostId(null), 2000);
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                    >
+                      {copiedPostId === item.post.id ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          <span className="text-emerald-600 font-semibold">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Copy text</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {item.post.status === 'draft' &&
+                    (item.post.targetConnectionIds?.length ?? 0) > 0 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          publishPost.mutate(
+                            { id: item.post.id },
+                            {
+                              onSuccess: () => toast.success('Published'),
+                              onError: (e: Error) => toast.error(e.message),
+                            },
+                          )
+                        }
+                        className="text-xs font-semibold text-purple-600 hover:underline"
+                      >
+                        Publish now
+                      </button>
+                    )}
+                </div>
               </li>
             ),
           )}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'glintly-ui';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trash2, CheckCircle2 } from 'lucide-react';
 import { type Connection, useDisconnectConnection } from '@/api/services/socialDeck';
 import type { PlatformType } from '@/components/platform/ConnectPanel';
 import ContextPanel from '@/components/platform/ContextPanel';
@@ -34,17 +34,26 @@ function ConfirmDisconnectModal({
 
   return (
     <div className="sd-modal-overlay">
-      <div className="sd-modal-panel w-full max-w-sm p-6 space-y-4">
-        <h2 className="font-bold text-[var(--sd-ink)]">Disconnect {label}?</h2>
-        <p className="text-sm text-[var(--sd-muted)] leading-relaxed">
+      <div className="sd-modal-panel w-full max-w-sm p-6 space-y-4 border border-slate-200">
+        <h2 className="text-base font-bold text-slate-900">Disconnect {label}?</h2>
+        <p className="text-xs text-slate-500 leading-relaxed">
           Posts won&apos;t be able to publish here until you reconnect it. You can reconnect
           anytime from this page.
         </p>
-        <div className="flex gap-2 justify-end">
-          <button type="button" onClick={onClose} className="sd-btn sd-btn-secondary px-4 py-2 text-sm">
+        <div className="flex gap-2 justify-end pt-2 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={onClose}
+            className="sd-btn sd-btn-secondary px-4 py-2 text-xs"
+          >
             Cancel
           </button>
-          <button type="button" disabled={pending} onClick={onConfirm} className="sd-btn sd-btn-danger px-4 py-2 text-sm">
+          <button
+            type="button"
+            disabled={pending}
+            onClick={onConfirm}
+            className="sd-btn sd-btn-danger px-4 py-2 text-xs"
+          >
             {pending ? 'Disconnecting…' : 'Disconnect'}
           </button>
         </div>
@@ -56,17 +65,23 @@ function ConfirmDisconnectModal({
 function PlatformTabs({ connection, type }: { connection: Connection; type: PlatformType }) {
   const tabs = [
     { id: 'briefing', label: 'Briefing & Auto Run', content: <ContextPanel connection={connection} /> },
-    { id: 'settings', label: 'Settings', content: <AiSettingsPanel connection={connection} /> },
-    ...(type !== 'youtube'
-      ? [{ id: 'posts', label: 'Post history', content: <PostHistorySection connection={connection} /> }]
-      : []),
-    ...(type === 'instagram'
-      ? [{ id: 'video-series', label: 'Video Reel Series', content: <VideoSeriesSection connection={connection} /> }]
+    { id: 'settings', label: 'AI Settings', content: <AiSettingsPanel connection={connection} /> },
+    {
+      id: 'posts',
+      label: type === 'youtube' ? 'Publish History' : 'Post History',
+      content: <PostHistorySection connection={connection} />,
+    },
+    ...(type === 'instagram' || type === 'youtube'
+      ? [
+          {
+            id: 'video-series',
+            label: type === 'youtube' ? 'YouTube Shorts Series' : 'Video Reel Series',
+            content: <VideoSeriesSection connection={connection} />,
+          },
+        ]
       : []),
   ];
 
-  // Persisted in the URL (?tab=...) rather than plain component state, so it survives a reload
-  // instead of always snapping back to the first tab.
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(
@@ -86,33 +101,30 @@ function PlatformTabs({ connection, type }: { connection: Connection; type: Plat
   }
 
   return (
-    <div>
-      <div className="border-b border-[var(--sd-line-soft)] flex gap-1 overflow-x-auto">
+    <div className="space-y-6">
+      {/* Modern Segmented Navigation Tabs */}
+      <div className="inline-flex p-1 rounded-xl bg-slate-100/90 border border-slate-200/80 gap-1 overflow-x-auto max-w-full">
         {tabs.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => selectTab(t.id)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
+            className={`px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all duration-150 ${
               active.id === t.id
-                ? 'border-purple-600 text-purple-700'
-                : 'border-transparent text-[var(--sd-muted)] hover:text-[var(--sd-ink)] hover:border-[var(--sd-line)]'
+                ? 'bg-white text-indigo-600 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
             }`}
           >
             {t.label}
           </button>
         ))}
       </div>
-      <div className="pt-6">{active.content}</div>
+
+      <div>{active.content}</div>
     </div>
   );
 }
 
-/**
- * The full "connected" control surface for one platform connection — header (name + disconnect)
- * plus the Briefing/Compose/Post history/Video Series tabs. Shared by the single-account
- * PlatformPage (LinkedIn/YouTube/Community) and Instagram's multi-account detail page.
- */
 export default function ConnectedPlatformPanel({
   connection,
   type,
@@ -146,28 +158,42 @@ export default function ConnectedPlatformPanel({
       {backTo && (
         <Link
           to={backTo.to}
-          className="inline-flex items-center gap-1 text-sm text-purple-600 hover:underline"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-3.5 h-3.5" />
           {backTo.label}
         </Link>
       )}
 
-      <div className="flex items-center justify-between gap-3">
+      {/* Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white border border-slate-200 shadow-xs">
         <div>
-          <h1 className="sd-display text-2xl font-bold text-[var(--sd-ink)]">{PLATFORM_LABEL[type]}</h1>
-          <p className="text-sm text-[var(--sd-muted)] mt-1 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Connected as {connection.name}
+          <div className="flex items-center gap-2 mb-1">
+            <span className="sd-badge bg-emerald-50 text-emerald-700 border-emerald-200">
+              <span className="sd-pulse-dot bg-emerald-500" />
+              Active Connection
+            </span>
+            <span className="text-xs text-slate-400">·</span>
+            <span className="text-xs text-slate-500 font-medium">Channel Synchronized</span>
+          </div>
+          <h1 className="sd-display text-2xl font-extrabold text-slate-900 tracking-tight">
+            {PLATFORM_LABEL[type]}
+          </h1>
+          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+            <span>
+              Connected as <strong className="text-slate-700">{connection.name}</strong>
+            </span>
           </p>
         </div>
+
         <button
           type="button"
           onClick={() => setConfirmingDisconnect(true)}
-          className="sd-btn sd-btn-ghost text-xs text-[var(--sd-subtle)] hover:text-red-600 px-3 py-1.5 shrink-0"
+          className="sd-btn sd-btn-ghost text-xs text-slate-400 hover:text-red-600 hover:bg-red-50 px-3 py-1.5 shrink-0 self-start sm:self-center"
         >
           <Trash2 className="w-3.5 h-3.5" />
-          Disconnect
+          Disconnect Channel
         </button>
       </div>
 
@@ -175,3 +201,4 @@ export default function ConnectedPlatformPanel({
     </div>
   );
 }
+

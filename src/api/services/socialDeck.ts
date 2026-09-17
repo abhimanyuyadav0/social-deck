@@ -42,6 +42,7 @@ export type SocialPost = {
   title: string;
   content: string;
   images: string[];
+  videoUrl?: string | null;
   category: string;
   tags: string[];
   status: string;
@@ -55,6 +56,7 @@ export type SocialPost = {
     externalUrl?: string;
     error?: string;
   }>;
+  source?: string;
   createdAt: string;
 };
 
@@ -343,11 +345,79 @@ export function usePublishPost() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, connectionIds }: { id: string; connectionIds?: string[] }) =>
-      api(`/social-deck/posts/${id}/publish`, {
+      api<{ success: boolean; message: string; data: { post: SocialPost } }>(
+        `/social-deck/posts/${id}/publish`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ connectionIds }),
+        },
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.posts }),
+  });
+}
+
+export function useCreatePost() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: {
+      title: string;
+      content: string;
+      images?: string[];
+      videoUrl?: string | null;
+      category?: string;
+      tags?: string[];
+      connectionIds?: string[];
+      publish?: boolean;
+    }) =>
+      api<{ success: boolean; message: string; data: { post: SocialPost } }>('/social-deck/posts', {
         method: 'POST',
-        body: JSON.stringify({ connectionIds }),
+        body: JSON.stringify(body),
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.posts }),
+  });
+}
+
+export function useUpdatePost() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...body
+    }: {
+      id: string;
+      title?: string;
+      content?: string;
+      image?: string;
+      images?: string[];
+      videoUrl?: string | null;
+      category?: string;
+      tags?: string[];
+    }) =>
+      api<{ success: boolean; message: string; data: { post: SocialPost } }>(
+        `/social-deck/posts/${id}`,
+        {
+          method: 'PUT',
+          body: JSON.stringify(body),
+        },
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.posts }),
+  });
+}
+
+export function useUploadMedia() {
+  return useMutation({
+    mutationFn: (file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      return api<{
+        success: boolean;
+        message?: string;
+        data: { url: string; type: 'image' | 'video'; filename: string };
+      }>('/social-deck/media/upload', {
+        method: 'POST',
+        body: form,
+      });
+    },
   });
 }
 

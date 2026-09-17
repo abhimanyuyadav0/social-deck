@@ -14,6 +14,7 @@ import {
   useSetConnectionContext,
 } from '@/api/services/socialDeck';
 import AutoResizeTextarea from '@/components/AutoResizeTextarea';
+import PostGapSelector from './PostGapSelector';
 
 const IMAGE_STYLES = [
   'Flat vector illustration',
@@ -34,15 +35,6 @@ function formatWhen(iso?: string | null) {
   }
 }
 
-function intervalLabel(hours: number) {
-  if (hours === 24) return 'Every day (24 hours)';
-  if (hours === 1) return 'Every 1 hour';
-  if (hours > 24 && hours % 24 === 0) {
-    const days = hours / 24;
-    return `Every ${days} days`;
-  }
-  return `Every ${hours} hours`;
-}
 
 const IMAGE_MODEL_LABELS: Record<string, string> = {
   'gemini-3.1-flash-lite-image': 'Nano Banana 2 Lite (fastest, cheapest)',
@@ -122,14 +114,7 @@ export default function ContextPanel({ connection }: { connection: Connection })
   const auto = connection.contextId
     ? autoRunData?.data?.autoRuns.find((a) => a.contextId === connection.contextId)
     : undefined;
-  const intervalOptions = Array.from(
-    new Set([
-      ...(autoRunData?.data?.intervalOptions ?? [1, 2, 3, 4, 6, 8, 12, 24]),
-      72,
-      144,
-      240,
-    ]),
-  ).sort((a, b) => a - b);
+
   const imageModelOptions = autoRunData?.data?.imageModelOptions ?? [
     'gemini-3.1-flash-lite-image',
     'gemini-3.1-flash-image',
@@ -144,7 +129,11 @@ export default function ContextPanel({ connection }: { connection: Connection })
   const configs = aiData?.data?.configs ?? [];
   const defaultAi = configs.find((c) => c.isDefault) ?? configs[0];
   const isGeminiAi = defaultAi?.provider === 'gemini';
-  const canGenerateVideo = connection.type === 'instagram' || connection.type === 'facebook';
+  const isYouTube = connection.type === 'youtube';
+  const canGenerateVideo =
+    connection.type === 'instagram' ||
+    connection.type === 'facebook' ||
+    connection.type === 'youtube';
 
   const [showDelete, setShowDelete] = useState(false);
   const [enabled, setEnabled] = useState(false);
@@ -180,11 +169,12 @@ export default function ContextPanel({ connection }: { connection: Connection })
     setIntervalHours(auto.intervalHours);
     setTopicsText((auto.topics || []).join('\n'));
     setPromptHint(auto.promptHint || '');
-    setMediaType(auto.mediaType || 'none');
+    const resolvedMedia = isYouTube && auto.mediaType === 'image' ? 'video' : (auto.mediaType || 'none');
+    setMediaType(resolvedMedia);
     setDurationSeconds(auto.durationSeconds || 8);
     setImageModel(auto.imageModel || 'gemini-3.1-flash-lite-image');
     setVideoModel(auto.videoModel || 'veo-3.1-generate-preview');
-  }, [auto]);
+  }, [auto, isYouTube]);
 
   const saving =
     createContext.isPending ||
@@ -193,6 +183,7 @@ export default function ContextPanel({ connection }: { connection: Connection })
     setConnectionContext.isPending;
 
   const saveScheduleFor = (contextIdToUse: string, willEnable: boolean) => {
+    const effectiveMediaType = isYouTube && mediaType === 'image' ? 'video' : mediaType;
     updateAuto.mutate(
       {
         contextId: contextIdToUse,
@@ -200,9 +191,9 @@ export default function ContextPanel({ connection }: { connection: Connection })
         intervalHours,
         topicsText,
         promptHint,
-        mediaType,
-        ...(mediaType === 'image' ? { imageModel } : {}),
-        ...(mediaType === 'video' ? { durationSeconds, videoModel } : {}),
+        mediaType: effectiveMediaType,
+        ...(effectiveMediaType === 'image' ? { imageModel } : {}),
+        ...(effectiveMediaType === 'video' ? { durationSeconds, videoModel } : {}),
       },
       {
         onSuccess: (res) => toast.success(res.data.auto.enabled ? 'Auto Run is ON' : 'Saved'),
@@ -428,21 +419,23 @@ export default function ContextPanel({ connection }: { connection: Connection })
                   />
                   None
                 </label>
-                <label className="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="auto-media-type"
-                    checked={mediaType === 'image'}
-                    onChange={() => setMediaType('image')}
-                    className="border-[var(--sd-line)]"
-                  />
-                  Image (1–4, random)
-                </label>
+                {!isYouTube && (
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="auto-media-type"
+                      checked={mediaType === 'image'}
+                      onChange={() => setMediaType('image')}
+                      className="border-[var(--sd-line)]"
+                    />
+                    Image (1–4, random)
+                  </label>
+                )}
                 <label
                   className={`flex items-center gap-1.5 ${!canGenerateVideo || !isGeminiAi ? 'opacity-50' : 'cursor-pointer'}`}
                   title={
                     !canGenerateVideo
-                      ? 'Video currently publishes to Instagram Reels or Facebook Page video only'
+                      ? 'Video currently publishes to YouTube Shorts, Instagram Reels, or Facebook Page video only'
                       : !isGeminiAi
                         ? 'Video generation needs a Gemini connection — it uses Veo.'
                         : ''
@@ -456,7 +449,7 @@ export default function ContextPanel({ connection }: { connection: Connection })
                     onChange={() => setMediaType('video')}
                     className="border-[var(--sd-line)]"
                   />
-                  Video (Reel / Page video)
+                  {isYouTube ? 'Video (YouTube Short / Video)' : 'Video (Reel / Page video)'}
                 </label>
               </div>
               {mediaType === 'image' && (
@@ -513,21 +506,36 @@ export default function ContextPanel({ connection }: { connection: Connection })
                 </div>
               )}
               <p className="text-[11px] text-[var(--sd-muted)]">
-                Image works with either OpenAI or Gemini (Nano Banana) — whichever provider is
-                connected. Video always uses Gemini (Veo) and publishes to Instagram Reels or
-                Facebook Page video. A single Veo call only produces 8s — longer durations chain
-                "extend" calls in ~7s steps (15s = 2 Veo requests, 22s = 3, 29s = 4).
+                {isYouTube
+                  ? 'YouTube is designed for video content. Video generation uses Gemini (Veo) and publishes directly to YouTube Shorts / Videos. A single Veo call produces 8s — longer durations chain "extend" calls in ~7s steps (15s = 2 Veo requests, 22s = 3, 29s = 4).'
+                  : 'Image works with either OpenAI or Gemini (Nano Banana) — whichever provider is connected. Video always uses Gemini (Veo) and publishes to Instagram Reels or Facebook Page video. A single Veo call only produces 8s — longer durations chain "extend" calls in ~7s steps (15s = 2 Veo requests, 22s = 3, 29s = 4).'}
               </p>
               {mediaType === 'video' && (
-                <p className="text-[11px] text-amber-600">
-                  Veo needs a paid Gemini plan with billing enabled — free-tier keys usually have
-                  0 Veo quota, so Auto Run would fail every scheduled cycle until billing is on.
-                  Longer durations use proportionally more of your daily Veo quota per post. Check{' '}
-                  <a href="https://ai.dev/rate-limit" target="_blank" rel="noreferrer" className="hover:underline">
-                    ai.dev/rate-limit
-                  </a>{' '}
-                  before enabling.
-                </p>
+                <div className="p-3 rounded-xl bg-amber-50/90 border border-amber-200/80 text-[11px] text-amber-900 space-y-1">
+                  <p className="font-bold text-amber-800">
+                    ⚠️ Veo Video Generation Requires AI Studio Pay-as-you-go Billing
+                  </p>
+                  <p className="text-amber-800/90 leading-relaxed">
+                    Free-tier keys have 0 Veo quota. <em>Note:</em> Having a consumer "Gemini Pro" (Google One) subscription does not provide developer API quota. You must enable Pay-as-you-go billing in{' '}
+                    <a
+                      href="https://aistudio.google.com/app/plan_information"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-bold underline text-amber-900 hover:text-black"
+                    >
+                      Google AI Studio
+                    </a>{' '}
+                    to generate video reels. Check limits on{' '}
+                    <a
+                      href="https://ai.dev/rate-limit"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline text-amber-900 hover:text-black"
+                    >
+                      ai.dev/rate-limit
+                    </a>.
+                  </p>
+                </div>
               )}
             </div>
 
@@ -569,22 +577,11 @@ export default function ContextPanel({ connection }: { connection: Connection })
               <Clock className="w-4 h-4 text-purple-600" />
               <p className="font-semibold text-sm">Post gap</p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {intervalOptions.map((h) => (
-                <button
-                  key={h}
-                  type="button"
-                  onClick={() => setIntervalHours(h)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                    intervalHours === h
-                      ? 'bg-purple-600 text-white border-purple-600'
-                      : 'bg-white border-[var(--sd-line-soft)] text-[var(--sd-muted)] hover:border-purple-300'
-                  }`}
-                >
-                  {intervalLabel(h)}
-                </button>
-              ))}
-            </div>
+            <PostGapSelector
+              value={intervalHours}
+              onChange={setIntervalHours}
+              unit="hours"
+            />
           </div>
 
           <button type="button" onClick={() => saveAll()} disabled={saving} className="sd-btn sd-btn-primary px-5 py-2.5 text-sm">

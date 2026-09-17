@@ -15,8 +15,8 @@ import {
   useUpdateVideoSeriesInterval,
 } from '@/api/services/socialDeck';
 import AutoResizeTextarea from '@/components/AutoResizeTextarea';
+import PostGapSelector, { formatPostGap } from './PostGapSelector';
 
-const INTERVAL_OPTIONS_MINUTES = [1, 5, 10, 15, 30, 60, 120];
 const SEGMENT_OPTIONS_SECONDS = [15, 30, 60];
 /** A cut clip shorter than this is flagged as possibly not worth posting. */
 const SHORT_CLIP_THRESHOLD_SECONDS = 5;
@@ -59,9 +59,6 @@ function formatBytes(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function intervalLabel(minutes: number) {
-  return `Every ${minutes < 60 ? `${minutes} min` : `${minutes / 60} hr`}`;
-}
 
 function ConfirmRemoveModal({
   open,
@@ -69,12 +66,14 @@ function ConfirmRemoveModal({
   onClose,
   onConfirm,
   pending,
+  isYouTube,
 }: {
   open: boolean;
   hasLiveContent: boolean;
   onClose: () => void;
   onConfirm: () => void;
   pending: boolean;
+  isYouTube?: boolean;
 }) {
   if (!open) return null;
 
@@ -90,9 +89,8 @@ function ConfirmRemoveModal({
           {hasLiveContent && (
             <>
               {' '}
-              <strong>It does not delete anything from Instagram</strong> — Instagram&apos;s API
-              doesn&apos;t support deleting Reels for this kind of connection, so any parts already
-              posted stay live there. Delete them in the Instagram app if you want them gone too.
+              <strong>It does not delete anything from {isYouTube ? 'YouTube' : 'Instagram'}</strong> — any parts already
+              posted stay live there. Delete them in {isYouTube ? 'YouTube Studio' : 'the Instagram app'} if you want them gone too.
             </>
           )}
         </p>
@@ -109,7 +107,7 @@ function ConfirmRemoveModal({
   );
 }
 
-function SeriesCard({ series }: { series: VideoSeries }) {
+function SeriesCard({ series, isYouTube }: { series: VideoSeries; isYouTube?: boolean }) {
   const pause = usePauseVideoSeries();
   const resume = useResumeVideoSeries();
   const removeSeries = useRemoveVideoSeries();
@@ -136,6 +134,7 @@ function SeriesCard({ series }: { series: VideoSeries }) {
         hasLiveContent={hasLiveContent}
         onClose={() => setConfirmRemove(false)}
         pending={removeSeries.isPending}
+        isYouTube={isYouTube}
         onConfirm={() =>
           removeSeries.mutate(series.id, {
             onSuccess: () => {
@@ -157,7 +156,7 @@ function SeriesCard({ series }: { series: VideoSeries }) {
             target · created {formatWhen(series.createdAt)}
           </p>
           <p className="text-xs text-[var(--sd-subtle)] mt-0.5 flex items-center gap-1.5 flex-wrap">
-            <span>Post gap: {intervalLabel(series.intervalMinutes)}</span>
+            <span>Post gap: {formatPostGap(series.intervalMinutes)}</span>
             <button
               type="button"
               onClick={() => setEditingInterval((v) => !v)}
@@ -167,33 +166,26 @@ function SeriesCard({ series }: { series: VideoSeries }) {
             </button>
           </p>
           {editingInterval && (
-            <div className="flex flex-wrap gap-1.5 mt-1.5">
-              {INTERVAL_OPTIONS_MINUTES.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  disabled={updateInterval.isPending}
-                  onClick={() =>
-                    updateInterval.mutate(
-                      { id: series.id, intervalMinutes: m },
-                      {
-                        onSuccess: () => {
-                          toast.success(`Post gap set to ${intervalLabel(m)}`);
-                          setEditingInterval(false);
-                        },
-                        onError: (e: Error) => toast.error(e.message),
+            <div className="mt-2 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+              <p className="text-[11px] font-semibold text-slate-700 mb-2">Change post gap:</p>
+              <PostGapSelector
+                value={series.intervalMinutes}
+                unit="minutes"
+                compact
+                disabled={updateInterval.isPending}
+                onChange={(m) =>
+                  updateInterval.mutate(
+                    { id: series.id, intervalMinutes: m },
+                    {
+                      onSuccess: () => {
+                        toast.success(`Post gap set to ${formatPostGap(m)}`);
+                        setEditingInterval(false);
                       },
-                    )
-                  }
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors disabled:opacity-50 ${
-                    series.intervalMinutes === m
-                      ? 'bg-purple-600 text-white border-purple-600'
-                      : 'bg-white border-[var(--sd-line-soft)] text-[var(--sd-muted)] hover:border-purple-300'
-                  }`}
-                >
-                  {intervalLabel(m)}
-                </button>
-              ))}
+                      onError: (e: Error) => toast.error(e.message),
+                    },
+                  )
+                }
+              />
             </div>
           )}
         </div>
@@ -358,7 +350,7 @@ function SeriesCard({ series }: { series: VideoSeries }) {
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 text-red-600 text-xs font-medium hover:bg-red-50 transition-colors"
         >
           <Trash2 className="w-3.5 h-3.5" />
-          Remove from Social Deck{hasLiveContent ? ` (${postedCount} live on Instagram)` : ''}
+          Remove from Social Deck{hasLiveContent ? ` (${postedCount} live on ${isYouTube ? 'YouTube' : 'Instagram'})` : ''}
         </button>
       </div>
     </li>
@@ -369,6 +361,7 @@ type VideoMeta = { duration: number; width: number; height: number };
 
 /** Instagram-only: upload one video, get it auto-cut into Reels, posted one by one. */
 export default function VideoSeriesSection({ connection }: { connection: Connection }) {
+  const isYouTube = connection.type === 'youtube';
   const { data: seriesData, isLoading } = useVideoSeriesList();
   const createSeries = useCreateVideoSeries();
 
@@ -430,12 +423,12 @@ export default function VideoSeriesSection({ connection }: { connection: Connect
     <div className="space-y-4">
       <h2 className="sd-display text-lg font-bold flex items-center gap-2">
         <Film className="w-5 h-5 text-purple-600" />
-        Video Reel Series
+        {isYouTube ? 'YouTube Shorts Series' : 'Video Reel Series'}
       </h2>
       <p className="text-sm text-[var(--sd-muted)] -mt-2">
-        A different flow from the Photo &amp; Text Post above — upload one video of any length,
-        size, or shape, we cut it into equal clips at whatever length you choose, and post them
-        one by one as separate Reels on a schedule.
+        {isYouTube
+          ? 'Upload one video of any length, size, or shape. We cut it into equal clips at whatever length you choose, and post them one by one as YouTube Shorts on an automatic schedule.'
+          : 'A different flow from the Photo & Text Post above — upload one video of any length, size, or shape, we cut it into equal clips at whatever length you choose, and post them one by one as separate Reels on a schedule.'}
       </p>
 
       <div className="sd-card p-5 sm:p-6 space-y-4 max-w-3xl" style={{ borderColor: '#e9d5ff', background: 'linear-gradient(180deg, #faf5ff 0%, #ffffff 40%)' }}>
@@ -443,7 +436,7 @@ export default function VideoSeriesSection({ connection }: { connection: Connect
           <span className="text-xs font-medium text-[var(--sd-muted)]">Video</span>
           <p className="text-[11px] text-[var(--sd-muted)] mt-0.5 mb-1">
             Any aspect ratio works — vertical (9:16) posts as-is; horizontal or square video is
-            automatically scaled to fit and letterboxed into the Reels frame.
+            automatically scaled to fit and letterboxed into the {isYouTube ? 'Shorts' : 'Reels'} frame.
           </p>
           <label className="mt-1 flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-[var(--sd-line)] bg-white text-sm cursor-pointer hover:border-purple-300">
             <Upload className="w-4 h-4 text-[var(--sd-subtle)] shrink-0" />
@@ -536,34 +529,27 @@ export default function VideoSeriesSection({ connection }: { connection: Connect
           <AutoResizeTextarea
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
-            placeholder="Base caption — each part gets “· Part N/M” appended automatically"
+            placeholder={
+              isYouTube
+                ? 'Base title/caption — each part gets “· Part N/M” appended automatically'
+                : 'Base caption — each part gets “· Part N/M” appended automatically'
+            }
             className="mt-1 w-full px-3 py-2 rounded-xl border border-[var(--sd-line-soft)] bg-white text-sm focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-500/10 transition-colors"
           />
         </label>
 
-        <label className="block">
+        <div className="block space-y-1.5">
           <span className="text-xs font-medium text-[var(--sd-muted)]">Post gap</span>
-          <p className="text-[11px] text-[var(--sd-muted)] mt-0.5 mb-1">
+          <p className="text-[11px] text-[var(--sd-muted)] -mt-1 mb-2">
             How long to wait between parts on the automatic schedule. You can also publish the
             next part manually at any time from its card below, ahead of schedule.
           </p>
-          <div className="flex flex-wrap gap-2">
-            {INTERVAL_OPTIONS_MINUTES.map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setIntervalMinutes(m)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                  intervalMinutes === m
-                    ? 'bg-purple-600 text-white border-purple-600'
-                    : 'bg-white border-[var(--sd-line-soft)] text-[var(--sd-muted)] hover:border-purple-300'
-                }`}
-              >
-                {intervalLabel(m)}
-              </button>
-            ))}
-          </div>
-        </label>
+          <PostGapSelector
+            value={intervalMinutes}
+            onChange={setIntervalMinutes}
+            unit="minutes"
+          />
+        </div>
 
         <button
           type="button"
@@ -592,7 +578,7 @@ export default function VideoSeriesSection({ connection }: { connection: Connect
       ) : (
         <ul className="space-y-3">
           {seriesList.map((s) => (
-            <SeriesCard key={s.id} series={s} />
+            <SeriesCard key={s.id} series={s} isYouTube={isYouTube} />
           ))}
         </ul>
       )}
