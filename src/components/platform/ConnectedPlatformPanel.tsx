@@ -5,6 +5,7 @@ import { ArrowLeft, Trash2 } from 'lucide-react';
 import { type Connection, useDisconnectConnection } from '@/api/services/socialDeck';
 import type { PlatformType } from '@/components/platform/ConnectPanel';
 import ContextPanel from '@/components/platform/ContextPanel';
+import AiSettingsPanel from '@/components/platform/AiSettingsPanel';
 import PostHistorySection from '@/components/platform/PostHistorySection';
 import VideoSeriesSection from '@/components/platform/VideoSeriesSection';
 
@@ -55,6 +56,7 @@ function ConfirmDisconnectModal({
 function PlatformTabs({ connection, type }: { connection: Connection; type: PlatformType }) {
   const tabs = [
     { id: 'briefing', label: 'Briefing & Auto Run', content: <ContextPanel connection={connection} /> },
+    { id: 'settings', label: 'Settings', content: <AiSettingsPanel connection={connection} /> },
     ...(type !== 'youtube'
       ? [{ id: 'posts', label: 'Post history', content: <PostHistorySection connection={connection} /> }]
       : []),

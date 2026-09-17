@@ -3,7 +3,7 @@ import { toast } from 'glintly-ui';
 import { Trash2, X, Loader2, Play, Clock } from 'lucide-react';
 import {
   type Connection,
-  useAiConfig,
+  useAiConfigs,
   useAiContexts,
   useCreateAiContext,
   useUpdateAiContext,
@@ -106,7 +106,7 @@ function ConfirmDeleteModal({
 
 /** Briefing (who-you-are/goals/voice/etc) + Auto Run schedule for exactly this one connection. */
 export default function ContextPanel({ connection }: { connection: Connection }) {
-  const { data: aiData } = useAiConfig();
+  const { data: aiData } = useAiConfigs();
   const { data: contextsData } = useAiContexts();
   const { data: autoRunData, isLoading } = useAutoRun();
   const createContext = useCreateAiContext();
@@ -141,8 +141,9 @@ export default function ContextPanel({ connection }: { connection: Connection })
     'veo-3.1-lite-generate-preview',
   ];
   const videoDurationOptions = autoRunData?.data?.videoDurationOptions ?? [8, 15, 22, 29];
-  const ai = aiData?.data?.ai;
-  const isGeminiAi = ai?.provider === 'gemini';
+  const configs = aiData?.data?.configs ?? [];
+  const defaultAi = configs.find((c) => c.isDefault) ?? configs[0];
+  const isGeminiAi = defaultAi?.provider === 'gemini';
   const canGenerateVideo = connection.type === 'instagram' || connection.type === 'facebook';
 
   const [showDelete, setShowDelete] = useState(false);

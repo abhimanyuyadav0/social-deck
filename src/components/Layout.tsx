@@ -9,6 +9,7 @@ import {
   Users,
   LogOut,
   Share2,
+  Sparkles,
   BookOpen,
   Menu,
   X,
@@ -23,6 +24,7 @@ const nav = [
   { to: '/facebook', label: 'Facebook', icon: Facebook },
   { to: '/youtube', label: 'YouTube', icon: Youtube },
   { to: '/community', label: 'Community', icon: Users },
+  { to: '/ai-models', label: 'AI Models', icon: Sparkles },
   { to: '/docs', label: 'Docs', icon: BookOpen },
 ];
 

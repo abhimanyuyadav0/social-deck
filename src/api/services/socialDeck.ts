@@ -69,16 +69,21 @@ const keys = {
   videoSeries: ['social-deck', 'video-series'] as const,
 };
 
-export type AiProvider = 'openai' | 'gemini';
+export type AiProvider = 'openai' | 'gemini' | 'claude';
 
 export type AiConfig = {
   connected: boolean;
-  provider?: AiProvider;
+  provider: AiProvider;
   model?: string;
   keyPrefix?: string;
+  /** The one provider Compose/Auto Run actually call when several are linked. */
+  isDefault?: boolean;
   connectedAt?: string;
   lastUsedAt?: string;
 };
+
+/** 'default' defers to whichever provider is marked default on the AI Models page. */
+export type AiProviderChoice = 'default' | AiProvider;
 
 export type AiContext = {
   id: string;
@@ -89,6 +94,12 @@ export type AiContext = {
   voice: string;
   audience: string;
   imageStyle?: string;
+  /** Per-connection AI overrides — see this platform's Settings tab. */
+  textProvider?: AiProviderChoice;
+  /** Blank = that provider's own default model. */
+  textModel?: string;
+  /** No videoProvider — Veo is Gemini-only, so there's nothing to choose there. */
+  imageProvider?: Exclude<AiProviderChoice, 'claude'>;
   hasContext?: boolean;
   connectionCount?: number;
   updatedAt?: string;
@@ -184,10 +195,11 @@ export function useDisconnectConnection() {
   });
 }
 
-export function useAiConfig() {
+/** Every AI provider this user has linked — empty array if none. */
+export function useAiConfigs() {
   return useQuery({
     queryKey: keys.ai,
-    queryFn: () => api<{ success: boolean; data: { ai: AiConfig } }>('/social-deck/ai'),
+    queryFn: () => api<{ success: boolean; data: { configs: AiConfig[] } }>('/social-deck/ai'),
   });
 }
 
@@ -292,16 +304,37 @@ export function useSetConnectionContext() {
 export function useConnectAi() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: { apiKey: string; provider?: AiProvider; model?: string }) =>
-      api('/social-deck/ai/connect', { method: 'POST', body: JSON.stringify(body) }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.ai }),
+    mutationFn: (body: { apiKey: string; provider: AiProvider; model?: string; makeDefault?: boolean }) =>
+      api<{ success: boolean; data: { ai: AiConfig } }>('/social-deck/ai/connect', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.ai });
+      qc.invalidateQueries({ queryKey: keys.aiUsage });
+    },
   });
 }
 
 export function useDisconnectAi() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => api('/social-deck/ai', { method: 'DELETE' }),
+    mutationFn: (provider: AiProvider) => api(`/social-deck/ai/${provider}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.ai });
+      qc.invalidateQueries({ queryKey: keys.aiUsage });
+    },
+  });
+}
+
+/** Switch which linked provider Compose/Auto Run actually call. */
+export function useSetDefaultAi() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (provider: AiProvider) =>
+      api<{ success: boolean; data: { ai: AiConfig } }>(`/social-deck/ai/${provider}/default`, {
+        method: 'PUT',
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.ai }),
   });
 }

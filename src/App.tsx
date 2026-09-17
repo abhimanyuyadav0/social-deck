@@ -12,6 +12,7 @@ import InstagramAccountsPage from '@/pages/InstagramAccountsPage';
 import InstagramDetailPage from '@/pages/InstagramDetailPage';
 import FacebookPagesPage from '@/pages/FacebookPagesPage';
 import FacebookDetailPage from '@/pages/FacebookDetailPage';
+import AiModelsPage from '@/pages/AiModelsPage';
 import DocsPage from '@/pages/DocsPage';
 
 export default function App() {
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="facebook/:connectionId" element={<FacebookDetailPage />} />
           <Route path="youtube" element={<PlatformPage type="youtube" />} />
           <Route path="community" element={<PlatformPage type="community" />} />
+          <Route path="ai-models" element={<AiModelsPage />} />
           <Route path="docs" element={<DocsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

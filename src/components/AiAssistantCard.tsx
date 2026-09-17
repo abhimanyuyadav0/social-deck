@@ -1,237 +1,21 @@
-import { useEffect, useState } from 'react';
-import { toast } from 'glintly-ui';
-import { Sparkles, X, TriangleAlert } from 'lucide-react';
-import { useAiConfig, useAiUsage, useConnectAi, useDisconnectAi } from '@/api/services/socialDeck';
-import type { AiProvider } from '@/api/services/socialDeck';
+import { Link } from 'react-router-dom';
+import { Sparkles, ArrowRight } from 'lucide-react';
+import { useAiConfigs } from '@/api/services/socialDeck';
+import { AI_PROVIDER_INFO } from '@/components/ai/providerMeta';
 
-const PROVIDER_USAGE_URL: Record<AiProvider, string> = {
-  openai: 'https://platform.openai.com/usage',
-  gemini: 'https://ai.dev/rate-limit',
-};
-
-function formatCountdown(ms: number) {
-  const totalSeconds = Math.max(0, Math.round(ms / 1000));
-  const m = Math.floor(totalSeconds / 60);
-  const s = totalSeconds % 60;
-  return m > 0 ? `${m}m ${s}s` : `${s}s`;
-}
-
-/** Ticks every second while a retryAt is in the future — purely for the "try again in Xs" label. */
-function useCountdown(target: string | null) {
-  const [, forceTick] = useState(0);
-  useEffect(() => {
-    if (!target) return;
-    const id = setInterval(() => forceTick((n) => n + 1), 1000);
-    return () => clearInterval(id);
-  }, [target]);
-  if (!target) return null;
-  const ms = new Date(target).getTime() - Date.now();
-  return ms > 0 ? ms : 0;
-}
-
-const PROVIDER_INFO: Record<
-  AiProvider,
-  { label: string; keyPlaceholder: string; helpUrl: string; helpLabel: string; looksValid: (key: string) => boolean }
-> = {
-  openai: {
-    label: 'OpenAI',
-    keyPlaceholder: 'sk-...',
-    helpUrl: 'https://platform.openai.com/api-keys',
-    helpLabel: 'platform.openai.com',
-    looksValid: (key) => key.trim().startsWith('sk-'),
-  },
-  gemini: {
-    label: 'Gemini',
-    keyPlaceholder: 'AIza...',
-    helpUrl: 'https://aistudio.google.com/app/api-keys',
-    helpLabel: 'aistudio.google.com',
-    looksValid: (key) => key.trim().length > 10,
-  },
-};
-
-function ConnectAiModal({
-  open,
-  onClose,
-  onSubmit,
-  pending,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (provider: AiProvider, apiKey: string) => void;
-  pending: boolean;
-}) {
-  const [provider, setProvider] = useState<AiProvider>('openai');
-  const [apiKey, setApiKey] = useState('');
-
-  if (!open) return null;
-  const info = PROVIDER_INFO[provider];
-
-  return (
-    <div className="sd-modal-overlay">
-      <div className="sd-modal-panel w-full max-w-md p-6 space-y-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="font-bold text-[var(--sd-ink)]">Connect AI Assistant</h2>
-            <p className="text-xs text-[var(--sd-muted)] mt-1 leading-relaxed">
-              Used only to generate drafts{provider === 'openai' ? '/images' : ''} you ask for — billing
-              stays on your own {info.label} account.
-            </p>
-          </div>
-          <button type="button" onClick={onClose} className="sd-btn sd-btn-ghost p-1.5 shrink-0" aria-label="Close">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-[var(--sd-muted)] mb-1.5">Provider</label>
-          <div className="grid grid-cols-2 gap-2">
-            {(Object.keys(PROVIDER_INFO) as AiProvider[]).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setProvider(p)}
-                className={`px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
-                  provider === p
-                    ? 'border-purple-300 bg-purple-50 text-purple-700'
-                    : 'border-[var(--sd-line-soft)] text-[var(--sd-muted)] hover:bg-[var(--sd-surface-alt)]'
-                }`}
-              >
-                {PROVIDER_INFO[p].label}
-              </button>
-            ))}
-          </div>
-          {provider === 'gemini' && (
-            <p className="text-[11px] text-amber-600 mt-1.5">
-              Gemini covers text, image (Nano Banana), and video (Veo) generation.
-            </p>
-          )}
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-[var(--sd-muted)] mb-1">{info.label} API key</label>
-          <input
-            type="password"
-            autoComplete="off"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder={info.keyPlaceholder}
-            className="w-full px-3 py-2 rounded-xl border border-[var(--sd-line-soft)] bg-[var(--sd-surface-alt)] text-sm font-mono focus:border-purple-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-purple-500/10 transition-colors"
-          />
-          <p className="text-[11px] text-[var(--sd-subtle)] mt-1">
-            Get a key from{' '}
-            <a href={info.helpUrl} target="_blank" rel="noreferrer" className="text-purple-600 hover:underline">
-              {info.helpLabel}
-            </a>
-            .
-          </p>
-        </div>
-
-        <div className="flex gap-2 justify-end pt-1">
-          <button type="button" onClick={onClose} className="sd-btn sd-btn-secondary px-4 py-2 text-sm">
-            Cancel
-          </button>
-          <button
-            type="button"
-            disabled={pending || !info.looksValid(apiKey)}
-            onClick={() => onSubmit(provider, apiKey.trim())}
-            className="sd-btn sd-btn-primary px-4 py-2 text-sm"
-          >
-            {pending ? 'Connecting…' : 'Connect'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ConfirmDisconnectAiModal({
-  open,
-  onClose,
-  onConfirm,
-  pending,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  pending: boolean;
-}) {
-  if (!open) return null;
-
-  return (
-    <div className="sd-modal-overlay">
-      <div className="sd-modal-panel w-full max-w-sm p-6 space-y-4">
-        <h2 className="font-bold text-[var(--sd-ink)]">Disconnect AI Assistant?</h2>
-        <p className="text-sm text-[var(--sd-muted)] leading-relaxed">
-          Compose and Auto Run won&apos;t be able to draft posts or images on any platform until
-          you reconnect it.
-        </p>
-        <div className="flex gap-2 justify-end">
-          <button type="button" onClick={onClose} className="sd-btn sd-btn-secondary px-4 py-2 text-sm">
-            Cancel
-          </button>
-          <button type="button" disabled={pending} onClick={onConfirm} className="sd-btn sd-btn-danger px-4 py-2 text-sm">
-            {pending ? 'Disconnecting…' : 'Disconnect'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/** Global — AI powers drafts/images across every platform, so it doesn't belong on any one page. */
+/** Global — AI powers drafts/images across every platform, so it doesn't belong on any one page.
+ * Full connect/disconnect/default-provider management lives on the dedicated AI Models page. */
 export default function AiAssistantCard() {
-  const { data } = useAiConfig();
-  const connectAi = useConnectAi();
-  const disconnectAi = useDisconnectAi();
-  const [showModal, setShowModal] = useState(false);
-  const [confirmingDisconnect, setConfirmingDisconnect] = useState(false);
-
-  const ai = data?.data?.ai;
-  const hasAi = !!ai?.connected;
-  const providerLabel = ai?.provider ? PROVIDER_INFO[ai.provider]?.label || ai.provider : 'OpenAI';
-
-  const { data: usageData } = useAiUsage(hasAi);
-  const usage = usageData?.data?.usage;
-  const lastError = usage?.lastError;
-  const retryCountdownMs = useCountdown(lastError?.retryAt ?? null);
+  const { data } = useAiConfigs();
+  const configs = data?.data?.configs ?? [];
+  const defaultConfig = configs.find((c) => c.isDefault) ?? configs[0];
 
   return (
-    <div
-      className="sd-card p-4 sm:p-5 flex items-start gap-3.5"
+    <Link
+      to="/ai-models"
+      className="sd-card sd-card-link flex items-center gap-3.5 p-4 sm:p-5"
       style={{ borderColor: '#e9d5ff', background: 'linear-gradient(135deg, #faf5ff 0%, #fdf4ff 100%)' }}
     >
-      <ConnectAiModal
-        open={showModal}
-        onClose={() => setShowModal(false)}
-        pending={connectAi.isPending}
-        onSubmit={(provider, apiKey) =>
-          connectAi.mutate(
-            { apiKey, provider },
-            {
-              onSuccess: () => {
-                toast.success('AI connected');
-                setShowModal(false);
-              },
-              onError: (e: Error) => toast.error(e.message),
-            },
-          )
-        }
-      />
-      <ConfirmDisconnectAiModal
-        open={confirmingDisconnect}
-        pending={disconnectAi.isPending}
-        onClose={() => setConfirmingDisconnect(false)}
-        onConfirm={() =>
-          disconnectAi.mutate(undefined, {
-            onSuccess: () => {
-              toast.success('AI disconnected');
-              setConfirmingDisconnect(false);
-            },
-            onError: (e: Error) => toast.error(e.message),
-          })
-        }
-      />
-
       <div
         className="sd-icon-badge w-11 h-11 text-white shrink-0"
         style={{ background: 'var(--sd-accent-grad)', boxShadow: '0 6px 16px -6px rgba(147,51,234,0.45)' }}
@@ -239,70 +23,23 @@ export default function AiAssistantCard() {
         <Sparkles className="w-5 h-5" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-sm text-[var(--sd-ink)]">
-          AI Assistant{hasAi ? ` (${providerLabel})` : ''}
-        </p>
+        <p className="font-semibold text-sm text-[var(--sd-ink)]">AI Models</p>
         <p className="text-xs text-[var(--sd-muted)] mt-0.5">
-          Powers drafts and images across every platform&apos;s Compose and Auto Run.
+          {configs.length === 0
+            ? 'Connect OpenAI, Gemini, or Claude to power drafts and images.'
+            : `${configs.length} provider${configs.length === 1 ? '' : 's'} linked${
+                defaultConfig ? ` · ${AI_PROVIDER_INFO[defaultConfig.provider].label} is default` : ''
+              }`}
         </p>
-        {hasAi && ai?.keyPrefix && (
-          <p className="text-xs text-emerald-700 mt-1 font-mono">
-            Connected · {ai.keyPrefix}… · {ai.model}
-          </p>
-        )}
-        {hasAi && usage && (
-          <div className="mt-1.5 text-xs text-[var(--sd-muted)] space-y-0.5">
-            <p>
-              {usage.callsLastHour} call{usage.callsLastHour === 1 ? '' : 's'} in the last hour ·{' '}
-              {usage.callsLast24h} in the last 24h
-            </p>
-            {lastError && (
-              <p className={`flex items-center gap-1 ${lastError.rateLimited ? 'text-amber-600' : 'text-red-600'}`}>
-                <TriangleAlert className="w-3 h-3 shrink-0" />
-                {lastError.rateLimited ? 'Rate limited' : `Error ${lastError.statusCode}`} on{' '}
-                {new Date(lastError.at).toLocaleTimeString()}
-                {retryCountdownMs !== null && retryCountdownMs > 0
-                  ? ` — retry in ${formatCountdown(retryCountdownMs)}`
-                  : ''}
-              </p>
-            )}
-            <a
-              href={PROVIDER_USAGE_URL[ai?.provider || 'gemini']}
-              target="_blank"
-              rel="noreferrer"
-              className="text-purple-600 hover:underline inline-block"
-            >
-              View exact quota/usage on {ai?.provider === 'openai' ? 'OpenAI' : 'Google'}&apos;s
-              dashboard ↗
-            </a>
-          </div>
-        )}
       </div>
-      <div className="flex flex-col items-end gap-1.5 shrink-0">
-        {hasAi ? (
-          <>
-            <span className="sd-badge bg-emerald-100 text-emerald-800">Connected</span>
-            <button
-              type="button"
-              onClick={() => setShowModal(true)}
-              className="text-xs text-purple-600 hover:underline mt-0.5"
-            >
-              Update key
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirmingDisconnect(true)}
-              className="text-xs text-[var(--sd-subtle)] hover:text-red-600"
-            >
-              Disconnect
-            </button>
-          </>
+      <div className="flex items-center gap-2 shrink-0">
+        {configs.length === 0 ? (
+          <span className="sd-btn sd-btn-primary px-3.5 py-2 text-xs">Connect</span>
         ) : (
-          <button type="button" onClick={() => setShowModal(true)} className="sd-btn sd-btn-primary px-3.5 py-2 text-xs">
-            Connect
-          </button>
+          <span className="sd-badge bg-emerald-100 text-emerald-800">Connected</span>
         )}
+        <ArrowRight className="w-4 h-4 text-[var(--sd-subtle)]" />
       </div>
-    </div>
+    </Link>
   );
 }
