@@ -17,7 +17,7 @@ export function DocLink({ href, children }: { href: string; children: ReactNode 
 
 export function CodeBlock({ children }: { children: string }) {
   return (
-    <pre className="rounded-xl bg-gray-50 border border-gray-100 px-3 py-2 text-[11px] font-mono text-gray-800 overflow-x-auto whitespace-pre-wrap break-all">
+    <pre className="rounded-xl bg-[var(--sd-surface-alt)] border border-[var(--sd-line-soft)] px-3 py-2 text-[11px] font-mono text-[var(--sd-ink)] overflow-x-auto whitespace-pre-wrap break-all">
       {children}
     </pre>
   );
@@ -26,10 +26,16 @@ export function CodeBlock({ children }: { children: string }) {
 function Section({ n, title, children }: { n: number; title: string; children: ReactNode }) {
   return (
     <section className="space-y-2">
-      <h3 className="text-sm font-semibold text-gray-900">
-        {n}. {title}
+      <h3 className="text-sm font-semibold text-[var(--sd-ink)] flex items-center gap-2">
+        <span
+          className="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-[10px] font-bold shrink-0"
+          style={{ background: 'var(--sd-accent-grad)' }}
+        >
+          {n}
+        </span>
+        {title}
       </h3>
-      <div className="text-xs text-gray-600 leading-relaxed space-y-2">{children}</div>
+      <div className="text-xs text-[var(--sd-muted)] leading-relaxed space-y-2 pl-7">{children}</div>
     </section>
   );
 }
@@ -52,26 +58,20 @@ function HelpShell({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div
-        className={`bg-white rounded-2xl shadow-xl w-full ${wide ? 'max-w-2xl' : 'max-w-lg'} max-h-[85dvh] flex flex-col`}
-      >
-        <div className="flex items-start justify-between gap-3 p-6 pb-3 shrink-0 border-b border-gray-100">
+    <div className="sd-modal-overlay">
+      <div className={`sd-modal-panel w-full ${wide ? 'max-w-2xl' : 'max-w-lg'} max-h-[85dvh] flex flex-col`}>
+        <div className="flex items-start justify-between gap-3 p-6 pb-4 shrink-0 border-b border-[var(--sd-line-soft)]">
           <div>
-            <h2 className="font-semibold text-gray-900">{title}</h2>
-            {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
+            <h2 className="font-bold text-[var(--sd-ink)]">{title}</h2>
+            {subtitle && <p className="text-xs text-[var(--sd-muted)] mt-1">{subtitle}</p>}
           </div>
-          <button type="button" onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">
+          <button type="button" onClick={onClose} className="sd-btn sd-btn-ghost p-1.5 shrink-0" aria-label="Close">
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-6 pt-4 overflow-y-auto space-y-5 text-sm text-gray-700">{children}</div>
-        <div className="p-4 border-t border-gray-100 flex justify-end shrink-0">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm rounded-xl bg-gray-900 text-white font-semibold"
-          >
+        <div className="p-6 pt-4 overflow-y-auto space-y-5 text-sm text-[var(--sd-muted)]">{children}</div>
+        <div className="p-4 border-t border-[var(--sd-line-soft)] flex justify-end shrink-0">
+          <button type="button" onClick={onClose} className="sd-btn sd-btn-primary px-4 py-2 text-sm">
             Got it
           </button>
         </div>
@@ -83,11 +83,11 @@ function HelpShell({
 export function CommunityGuideContent() {
   return (
     <div className="space-y-4">
-      <p className="text-xs text-gray-500 leading-relaxed">
+      <p className="text-xs text-[var(--sd-subtle)] leading-relaxed">
         Paste a Community developer key so posts publish under that Community profile. Community
         issues the key — not Social Deck.
       </p>
-      <ol className="list-decimal pl-4 space-y-2 text-xs text-gray-600 leading-relaxed">
+      <ol className="list-decimal pl-4 space-y-2 text-xs text-[var(--sd-muted)] leading-relaxed">
         <li>
           Sign in to <DocLink href="https://community.timetofuture.com">Community</DocLink> with the
           account that should own published posts.
@@ -114,10 +114,10 @@ export function CommunityGuideContent() {
 export function AiGuideContent() {
   return (
     <div className="space-y-4">
-      <p className="text-xs text-gray-500 leading-relaxed">
+      <p className="text-xs text-[var(--sd-subtle)] leading-relaxed">
         Your OpenAI key is used only to draft posts — billing stays on your OpenAI account.
       </p>
-      <ol className="list-decimal pl-4 space-y-2 text-xs text-gray-600 leading-relaxed">
+      <ol className="list-decimal pl-4 space-y-2 text-xs text-[var(--sd-muted)] leading-relaxed">
         <li>
           Create an API key at{' '}
           <DocLink href="https://platform.openai.com/api-keys">platform.openai.com</DocLink>.
@@ -127,8 +127,8 @@ export function AiGuideContent() {
           <code className="text-purple-700">sk-...</code>).
         </li>
         <li>
-          Fill the <strong className="font-semibold text-gray-800">AI briefing</strong> on{' '}
-          <strong className="font-semibold text-gray-800">Auto Run</strong> — who you are, topics,
+          Fill the <strong className="font-semibold text-[var(--sd-ink)]">AI briefing</strong> on{' '}
+          <strong className="font-semibold text-[var(--sd-ink)]">Auto Run</strong> — who you are, topics,
           instructions, and image style (used for Compose and Auto Run).
         </li>
         <li>
@@ -183,16 +183,16 @@ export function LinkedInGuideContent() {
           Open <strong>My Apps → Time To Future Pvt. Ltd. → Products</strong> and enable:
         </p>
         <div className="grid sm:grid-cols-2 gap-2">
-          <div className="rounded-xl border border-gray-100 p-3 space-y-1">
-            <p className="font-semibold text-gray-800 text-xs">
+          <div className="rounded-xl border border-[var(--sd-line-soft)] p-3 space-y-1">
+            <p className="font-semibold text-[var(--sd-ink)] text-xs">
               Sign In with LinkedIn using OpenID Connect
             </p>
             <CodeBlock>{`openid
 profile
 email`}</CodeBlock>
           </div>
-          <div className="rounded-xl border border-gray-100 p-3 space-y-1">
-            <p className="font-semibold text-gray-800 text-xs">Share on LinkedIn</p>
+          <div className="rounded-xl border border-[var(--sd-line-soft)] p-3 space-y-1">
+            <p className="font-semibold text-[var(--sd-ink)] text-xs">Share on LinkedIn</p>
             <CodeBlock>w_member_social</CodeBlock>
           </div>
         </div>
@@ -203,11 +203,11 @@ email`}</CodeBlock>
         <p>
           Go to <strong>Time To Future Pvt. Ltd. → Auth</strong>. Under Authorized redirect URLs, add:
         </p>
-        <p className="font-medium text-gray-800">Production</p>
+        <p className="font-medium text-[var(--sd-ink)]">Production</p>
         <CodeBlock>
           https://api.timetofuture.com/api/social-deck/connections/linkedin/callback
         </CodeBlock>
-        <p className="font-medium text-gray-800">Local development</p>
+        <p className="font-medium text-[var(--sd-ink)]">Local development</p>
         <CodeBlock>
           http://localhost:5001/api/social-deck/connections/linkedin/callback
         </CodeBlock>
@@ -217,11 +217,11 @@ email`}</CodeBlock>
       </Section>
 
       <Section n={4} title="Configure Environment Variables">
-        <p className="font-medium text-gray-800">Local</p>
+        <p className="font-medium text-[var(--sd-ink)]">Local</p>
         <CodeBlock>{`LINKEDIN_CLIENT_ID=your_client_id
 LINKEDIN_CLIENT_SECRET=your_client_secret
 LINKEDIN_REDIRECT_URI=http://localhost:5001/api/social-deck/connections/linkedin/callback`}</CodeBlock>
-        <p className="font-medium text-gray-800">Production</p>
+        <p className="font-medium text-[var(--sd-ink)]">Production</p>
         <CodeBlock>{`LINKEDIN_CLIENT_ID=your_client_id
 LINKEDIN_CLIENT_SECRET=your_client_secret
 LINKEDIN_REDIRECT_URI=https://api.timetofuture.com/api/social-deck/connections/linkedin/callback`}</CodeBlock>
@@ -287,28 +287,28 @@ scope=openid profile email w_member_social`}</CodeBlock>
       </Section>
 
       <Section n={9} title="Products and Scopes">
-        <div className="overflow-x-auto rounded-xl border border-gray-100">
+        <div className="overflow-x-auto rounded-xl border border-[var(--sd-line-soft)]">
           <table className="w-full text-left text-[11px]">
-            <thead className="bg-gray-50 text-gray-600">
+            <thead className="bg-[var(--sd-surface-alt)] text-[var(--sd-muted)]">
               <tr>
                 <th className="px-3 py-2 font-semibold">LinkedIn Product</th>
                 <th className="px-3 py-2 font-semibold">Scope</th>
               </tr>
             </thead>
             <tbody>
-              <tr className="border-t border-gray-100">
+              <tr className="border-t border-[var(--sd-line-soft)]">
                 <td className="px-3 py-2">Sign In with LinkedIn using OpenID Connect</td>
                 <td className="px-3 py-2 font-mono">openid</td>
               </tr>
-              <tr className="border-t border-gray-100">
+              <tr className="border-t border-[var(--sd-line-soft)]">
                 <td className="px-3 py-2">Sign In with LinkedIn using OpenID Connect</td>
                 <td className="px-3 py-2 font-mono">profile</td>
               </tr>
-              <tr className="border-t border-gray-100">
+              <tr className="border-t border-[var(--sd-line-soft)]">
                 <td className="px-3 py-2">Sign In with LinkedIn using OpenID Connect</td>
                 <td className="px-3 py-2 font-mono">email</td>
               </tr>
-              <tr className="border-t border-gray-100">
+              <tr className="border-t border-[var(--sd-line-soft)]">
                 <td className="px-3 py-2">Share on LinkedIn</td>
                 <td className="px-3 py-2 font-mono">w_member_social</td>
               </tr>
@@ -318,7 +318,7 @@ scope=openid profile email w_member_social`}</CodeBlock>
       </Section>
 
       <Section n={10} title="Final Checklist">
-        <ul className="space-y-1 font-mono text-[11px] bg-gray-50 border border-gray-100 rounded-xl px-3 py-2">
+        <ul className="space-y-1 font-mono text-[11px] bg-[var(--sd-surface-alt)] border border-[var(--sd-line-soft)] rounded-xl px-3 py-2">
           {[
             'LinkedIn Developer App created',
             'Client ID obtained',
@@ -420,19 +420,19 @@ https://www.googleapis.com/auth/youtube.upload`}</CodeBlock>
           <strong>OAuth client ID</strong> of type <strong>Web application</strong>, then add
           these authorized redirect URIs:
         </p>
-        <p className="font-medium text-gray-800">Production</p>
+        <p className="font-medium text-[var(--sd-ink)]">Production</p>
         <CodeBlock>https://api.timetofuture.com/api/social-deck/connections/youtube/callback</CodeBlock>
-        <p className="font-medium text-gray-800">Local development</p>
+        <p className="font-medium text-[var(--sd-ink)]">Local development</p>
         <CodeBlock>http://localhost:5001/api/social-deck/connections/youtube/callback</CodeBlock>
         <p>Copy the generated Client ID and Client Secret.</p>
       </Section>
 
       <Section n={5} title="Configure environment variables">
-        <p className="font-medium text-gray-800">Local</p>
+        <p className="font-medium text-[var(--sd-ink)]">Local</p>
         <CodeBlock>{`YOUTUBE_CLIENT_ID=your_client_id
 YOUTUBE_CLIENT_SECRET=your_client_secret
 YOUTUBE_REDIRECT_URI=http://localhost:5001/api/social-deck/connections/youtube/callback`}</CodeBlock>
-        <p className="font-medium text-gray-800">Production</p>
+        <p className="font-medium text-[var(--sd-ink)]">Production</p>
         <CodeBlock>{`YOUTUBE_CLIENT_ID=your_client_id
 YOUTUBE_CLIENT_SECRET=your_client_secret
 YOUTUBE_REDIRECT_URI=https://api.timetofuture.com/api/social-deck/connections/youtube/callback`}</CodeBlock>
@@ -503,9 +503,9 @@ export function InstagramGuideContent() {
           On the <strong>API setup with Instagram login</strong> screen, add these OAuth redirect
           URIs:
         </p>
-        <p className="font-medium text-gray-800">Production</p>
+        <p className="font-medium text-[var(--sd-ink)]">Production</p>
         <CodeBlock>https://api.timetofuture.com/api/social-deck/connections/instagram/callback</CodeBlock>
-        <p className="font-medium text-gray-800">Local development</p>
+        <p className="font-medium text-[var(--sd-ink)]">Local development</p>
         <CodeBlock>http://localhost:5001/api/social-deck/connections/instagram/callback</CodeBlock>
       </Section>
 
@@ -521,11 +521,11 @@ instagram_business_content_publish`}</CodeBlock>
           shown on the API setup with Instagram login screen (not the Meta App ID/Secret at the
           top of the dashboard).
         </p>
-        <p className="font-medium text-gray-800">Local</p>
+        <p className="font-medium text-[var(--sd-ink)]">Local</p>
         <CodeBlock>{`INSTAGRAM_CLIENT_ID=your_instagram_app_id
 INSTAGRAM_CLIENT_SECRET=your_instagram_app_secret
 INSTAGRAM_REDIRECT_URI=http://localhost:5001/api/social-deck/connections/instagram/callback`}</CodeBlock>
-        <p className="font-medium text-gray-800">Production</p>
+        <p className="font-medium text-[var(--sd-ink)]">Production</p>
         <CodeBlock>{`INSTAGRAM_CLIENT_ID=your_instagram_app_id
 INSTAGRAM_CLIENT_SECRET=your_instagram_app_secret
 INSTAGRAM_REDIRECT_URI=https://api.timetofuture.com/api/social-deck/connections/instagram/callback`}</CodeBlock>
@@ -601,9 +601,9 @@ export function FacebookGuideContent() {
 
       <Section n={3} title="Configure the OAuth redirect URI">
         <p>Add these OAuth redirect URIs:</p>
-        <p className="font-medium text-gray-800">Production</p>
+        <p className="font-medium text-[var(--sd-ink)]">Production</p>
         <CodeBlock>https://api.timetofuture.com/api/social-deck/connections/facebook/callback</CodeBlock>
-        <p className="font-medium text-gray-800">Local development</p>
+        <p className="font-medium text-[var(--sd-ink)]">Local development</p>
         <CodeBlock>http://localhost:5001/api/social-deck/connections/facebook/callback</CodeBlock>
       </Section>
 
@@ -619,11 +619,11 @@ pages_manage_posts`}</CodeBlock>
           Use the app&apos;s <strong>App ID</strong> and <strong>App Secret</strong> from the
           dashboard&apos;s Settings → Basic page.
         </p>
-        <p className="font-medium text-gray-800">Local</p>
+        <p className="font-medium text-[var(--sd-ink)]">Local</p>
         <CodeBlock>{`FACEBOOK_CLIENT_ID=your_app_id
 FACEBOOK_CLIENT_SECRET=your_app_secret
 FACEBOOK_REDIRECT_URI=http://localhost:5001/api/social-deck/connections/facebook/callback`}</CodeBlock>
-        <p className="font-medium text-gray-800">Production</p>
+        <p className="font-medium text-[var(--sd-ink)]">Production</p>
         <CodeBlock>{`FACEBOOK_CLIENT_ID=your_app_id
 FACEBOOK_CLIENT_SECRET=your_app_secret
 FACEBOOK_REDIRECT_URI=https://api.timetofuture.com/api/social-deck/connections/facebook/callback`}</CodeBlock>

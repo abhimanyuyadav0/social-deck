@@ -21,7 +21,7 @@ export default function PlatformPage({ type }: { type: PlatformType }) {
   const connected = connection?.status === 'connected';
 
   if (isLoading) {
-    return <p className="text-sm text-gray-400">Loading…</p>;
+    return <p className="text-sm text-[var(--sd-subtle)]">Loading…</p>;
   }
 
   if (!connected || !connection) {

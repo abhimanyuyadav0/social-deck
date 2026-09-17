@@ -12,12 +12,14 @@ import {
 } from '@/api/services/socialDeck';
 
 const STATUS_STYLE: Record<string, string> = {
-  draft: 'bg-gray-100 text-gray-600',
+  draft: 'bg-gray-100 text-gray-700',
   published: 'bg-emerald-100 text-emerald-800',
   partial: 'bg-amber-100 text-amber-800',
   failed: 'bg-red-100 text-red-800',
   publishing: 'bg-blue-100 text-blue-800',
 };
+
+const cardCx = 'sd-card sd-card-hover p-4';
 
 function formatPostTime(iso?: string) {
   if (!iso) return null;
@@ -38,19 +40,19 @@ function VideoPartRow({ series, part }: { series: VideoSeries; part: VideoSeries
     : `Video Reel · Part ${part.order}/${series.parts.length}`;
 
   return (
-    <li className="rounded-xl border border-gray-200 bg-white p-4">
+    <li className={cardCx}>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-sm flex items-center gap-1.5">
+          <p className="font-semibold text-sm text-[var(--sd-ink)] flex items-center gap-1.5">
             <Film className="w-3.5 h-3.5 text-violet-500 shrink-0" />
             {label}
           </p>
           {part.postedAt && (
-            <p className="text-[11px] text-gray-400 mt-1.5">Posted {formatPostTime(part.postedAt)}</p>
+            <p className="text-[11px] text-[var(--sd-subtle)] mt-1.5">Posted {formatPostTime(part.postedAt)}</p>
           )}
         </div>
         <span
-          className={`text-[10px] px-2 py-0.5 rounded-full font-medium capitalize shrink-0 ${
+          className={`sd-badge shrink-0 ${
             part.status === 'posted' ? STATUS_STYLE.published : STATUS_STYLE.failed
           }`}
         >
@@ -58,7 +60,7 @@ function VideoPartRow({ series, part }: { series: VideoSeries; part: VideoSeries
         </span>
       </div>
       {(part.externalUrl || part.error) && (
-        <div className="mt-2 text-xs text-gray-600 flex flex-wrap items-center gap-x-2 gap-y-1">
+        <div className="mt-2 text-xs text-[var(--sd-muted)] flex flex-wrap items-center gap-x-2 gap-y-1">
           {part.externalUrl && (
             <a
               href={part.externalUrl}
@@ -131,24 +133,28 @@ export default function PostHistorySection({ connection }: { connection: Connect
 
   return (
     <div className="space-y-4">
-      <h2 className="sd-display text-lg font-bold">Post history</h2>
+      <h2 className="sd-display text-lg font-bold text-[var(--sd-ink)]">Post history</h2>
       {loading ? (
-        <p className="text-sm text-gray-400">Loading…</p>
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="sd-skeleton h-20" />
+          ))}
+        </div>
       ) : items.length === 0 ? (
-        <p className="text-sm text-gray-400">No posts yet for this connection.</p>
+        <p className="text-sm text-[var(--sd-subtle)]">No posts yet for this connection.</p>
       ) : (
         <ul className="space-y-3">
           {items.map((item) =>
             item.kind === 'video-part' ? (
               <VideoPartRow key={`video-${item.series.id}-${item.part.order}`} series={item.series} part={item.part} />
             ) : (
-              <li key={item.post.id} className="rounded-xl border border-gray-200 bg-white p-4">
+              <li key={item.post.id} className={cardCx}>
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-sm">{item.post.title}</p>
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.post.content}</p>
+                    <p className="font-semibold text-sm text-[var(--sd-ink)]">{item.post.title}</p>
+                    <p className="text-xs text-[var(--sd-muted)] mt-1 line-clamp-2">{item.post.content}</p>
                     {formatPostTime(item.post.publishedAt || item.post.createdAt) && (
-                      <p className="text-[11px] text-gray-400 mt-1.5">
+                      <p className="text-[11px] text-[var(--sd-subtle)] mt-1.5">
                         {item.post.publishedAt ? 'Posted' : 'Created'}{' '}
                         {formatPostTime(item.post.publishedAt || item.post.createdAt)}
                       </p>
@@ -173,11 +179,7 @@ export default function PostHistorySection({ connection }: { connection: Connect
                         )}
                       </div>
                     )}
-                    <span
-                      className={`text-[10px] px-2 py-0.5 rounded-full font-medium capitalize ${
-                        STATUS_STYLE[item.post.status] ?? STATUS_STYLE.draft
-                      }`}
-                    >
+                    <span className={`sd-badge ${STATUS_STYLE[item.post.status] ?? STATUS_STYLE.draft}`}>
                       {item.post.status}
                     </span>
                   </div>
@@ -190,7 +192,7 @@ export default function PostHistorySection({ connection }: { connection: Connect
                     return (
                       <div
                         key={key}
-                        className="mt-2 text-xs text-gray-600 flex flex-wrap items-center gap-x-2 gap-y-1"
+                        className="mt-2 text-xs text-[var(--sd-muted)] flex flex-wrap items-center gap-x-2 gap-y-1"
                       >
                         <span
                           className={`capitalize ${

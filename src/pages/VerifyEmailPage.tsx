@@ -58,13 +58,16 @@ export default function VerifyEmailPage() {
   }, [token, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-fuchsia-50 p-6">
-      <div className="w-full max-w-md bg-white rounded-2xl border border-[var(--sd-line)] shadow-sm p-8 text-center">
-        <div className="flex items-center justify-center gap-2 mb-6">
-          <span className="w-9 h-9 rounded-lg bg-purple-600 text-white flex items-center justify-center">
-            <Share2 className="w-4 h-4" />
+    <div className="min-h-screen flex items-center justify-center bg-[var(--sd-bg)] p-6">
+      <div className="w-full max-w-md sd-card p-8 sm:p-10 text-center">
+        <div className="flex items-center justify-center gap-2.5 mb-7">
+          <span
+            className="sd-icon-badge w-10 h-10 text-white"
+            style={{ background: 'var(--sd-accent-grad)', boxShadow: '0 6px 16px -6px rgba(147,51,234,0.45)' }}
+          >
+            <Share2 className="w-4.5 h-4.5" />
           </span>
-          <span className="font-semibold text-gray-900">Social Deck</span>
+          <span className="sd-display font-bold text-lg text-[var(--sd-ink)]">Social Deck</span>
         </div>
 
         {status === 'loading' && (
@@ -75,7 +78,7 @@ export default function VerifyEmailPage() {
         )}
         {status === 'error' && <XCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />}
 
-        <h1 className="text-xl font-bold text-gray-900 mb-2">
+        <h1 className="sd-display text-xl font-bold text-[var(--sd-ink)] mb-2">
           {status === 'loading' && 'Verifying email'}
           {status === 'success' && 'Email verified'}
           {status === 'error' && 'Verification failed'}
@@ -83,10 +86,7 @@ export default function VerifyEmailPage() {
         <p className="text-sm text-[var(--sd-muted)] leading-relaxed mb-6">{message}</p>
 
         {status !== 'loading' && (
-          <Link
-            to="/login"
-            className="inline-flex items-center justify-center w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl text-sm"
-          >
+          <Link to="/login" className="sd-btn sd-btn-primary w-full py-2.5 text-sm">
             {status === 'success' ? 'Sign in' : 'Back to sign in'}
           </Link>
         )}

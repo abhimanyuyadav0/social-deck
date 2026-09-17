@@ -51,7 +51,7 @@ export default function DocsPage() {
               <a
                 key={id}
                 href={`#${id}`}
-                className="px-2.5 py-1 rounded-lg bg-gray-100 text-xs text-gray-600 hover:bg-purple-50 hover:text-purple-800"
+                className="px-2.5 py-1 rounded-lg bg-[var(--sd-surface-alt)] text-xs text-[var(--sd-muted)] hover:bg-purple-50 hover:text-purple-800 transition-colors"
               >
                 {label}
               </a>
@@ -61,16 +61,16 @@ export default function DocsPage() {
 
         <section
           id="overview"
-          className="scroll-mt-4 rounded-xl border border-[var(--sd-line)] bg-white p-5 space-y-3"
+          className="scroll-mt-4 sd-card p-5 sm:p-6 space-y-3"
         >
-          <h2 className="font-semibold text-gray-900">Overview</h2>
-          <p className="text-xs text-gray-600 leading-relaxed">
+          <h2 className="font-semibold text-[var(--sd-ink)]">Overview</h2>
+          <p className="text-xs text-[var(--sd-muted)] leading-relaxed">
             Each platform in the sidebar — LinkedIn, Instagram, YouTube, Community — has its own
             dedicated page with everything for that platform: connect once, then briefing,
             schedule, compose, and post history all live together on that same page. Nothing is
             shared or mixed across platforms.
           </p>
-          <ol className="list-decimal pl-4 space-y-1.5 text-xs text-gray-600">
+          <ol className="list-decimal pl-4 space-y-1.5 text-xs text-[var(--sd-muted)]">
             <li>
               Click a platform in the sidebar (e.g.{' '}
               <Link to="/linkedin" className="text-purple-700 hover:underline">
@@ -102,14 +102,14 @@ export default function DocsPage() {
 
         <section
           id="linkedin"
-          className="scroll-mt-4 rounded-xl border border-[var(--sd-line)] bg-white p-5 space-y-4"
+          className="scroll-mt-4 sd-card p-5 sm:p-6 space-y-4"
         >
           <div className="flex items-center gap-2">
             <span className="w-9 h-9 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center">
               <Linkedin className="w-4 h-4" />
             </span>
             <div>
-              <h2 className="font-semibold text-gray-900">LinkedIn OAuth 2.0 Setup</h2>
+              <h2 className="font-semibold text-[var(--sd-ink)]">LinkedIn OAuth 2.0 Setup</h2>
               <p className="text-xs text-[var(--sd-muted)]">
                 Developer app + end-user connect flow
               </p>
@@ -120,14 +120,14 @@ export default function DocsPage() {
 
         <section
           id="instagram"
-          className="scroll-mt-4 rounded-xl border border-[var(--sd-line)] bg-white p-5 space-y-4"
+          className="scroll-mt-4 sd-card p-5 sm:p-6 space-y-4"
         >
           <div className="flex items-center gap-2">
             <span className="w-9 h-9 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center">
               <Instagram className="w-4 h-4" />
             </span>
             <div>
-              <h2 className="font-semibold text-gray-900">Instagram Login</h2>
+              <h2 className="font-semibold text-[var(--sd-ink)]">Instagram Login</h2>
               <p className="text-xs text-[var(--sd-muted)]">
                 No Facebook Page needed — Business or Creator account required
               </p>
@@ -149,19 +149,19 @@ export default function DocsPage() {
 
         <section
           id="youtube"
-          className="scroll-mt-4 rounded-xl border border-[var(--sd-line)] bg-white p-5 space-y-4"
+          className="scroll-mt-4 sd-card p-5 sm:p-6 space-y-4"
         >
           <div className="flex items-center gap-2">
             <span className="w-9 h-9 rounded-lg bg-red-100 text-red-600 flex items-center justify-center">
               <Youtube className="w-4 h-4" />
             </span>
             <div>
-              <h2 className="font-semibold text-gray-900">YouTube</h2>
+              <h2 className="font-semibold text-[var(--sd-ink)]">YouTube</h2>
               <p className="text-xs text-[var(--sd-muted)]">Connect only — publishing not yet supported</p>
             </div>
           </div>
           <YouTubeGuideContent />
-          <p className="text-xs text-gray-500 leading-relaxed">
+          <p className="text-xs text-[var(--sd-subtle)] leading-relaxed">
             YouTube requires an actual video file to publish, and Social Deck doesn&apos;t
             generate video for YouTube yet — so its page only has connect/reconnect/disconnect
             for now, no briefing, compose, or post history.
@@ -170,14 +170,14 @@ export default function DocsPage() {
 
         <section
           id="community"
-          className="scroll-mt-4 rounded-xl border border-[var(--sd-line)] bg-white p-5 space-y-4"
+          className="scroll-mt-4 sd-card p-5 sm:p-6 space-y-4"
         >
           <div className="flex items-center gap-2">
             <span className="w-9 h-9 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center">
               <Users className="w-4 h-4" />
             </span>
             <div>
-              <h2 className="font-semibold text-gray-900">Community</h2>
+              <h2 className="font-semibold text-[var(--sd-ink)]">Community</h2>
               <p className="text-xs text-[var(--sd-muted)]">Community by Time To Future Pvt. Ltd.</p>
             </div>
           </div>
@@ -186,19 +186,19 @@ export default function DocsPage() {
 
         <section
           id="ai"
-          className="scroll-mt-4 rounded-xl border border-[var(--sd-line)] bg-white p-5 space-y-4"
+          className="scroll-mt-4 sd-card p-5 sm:p-6 space-y-4"
         >
           <div className="flex items-center gap-2">
             <span className="w-9 h-9 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center">
               <Sparkles className="w-4 h-4" />
             </span>
             <div>
-              <h2 className="font-semibold text-gray-900">AI drafts (OpenAI)</h2>
+              <h2 className="font-semibold text-[var(--sd-ink)]">AI drafts (OpenAI)</h2>
               <p className="text-xs text-[var(--sd-muted)]">Powers Photo & Text Post and Auto Run</p>
             </div>
           </div>
           <AiGuideContent />
-          <p className="text-xs text-gray-500 leading-relaxed">
+          <p className="text-xs text-[var(--sd-subtle)] leading-relaxed">
             Connect it once from the{' '}
             <Link to="/" className="text-purple-700 hover:underline">
               Dashboard

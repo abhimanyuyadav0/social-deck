@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Link2, Users, Instagram, Facebook, Linkedin, Youtube } from 'lucide-react';
+import { Link2, Users, Instagram, Facebook, Linkedin, Youtube, Share2, CheckCircle2, Send } from 'lucide-react';
 import { useConnections, usePlatforms, usePosts } from '@/api/services/socialDeck';
 import DonutChart from '@/components/charts/DonutChart';
 import MiniBarChart from '@/components/charts/MiniBarChart';
@@ -97,35 +97,65 @@ export default function DashboardPage() {
       .sort((a, b) => b.value - a.value);
   }, [posts]);
 
+  const publishedCount = posts.filter((p) => p.status === 'published' || p.status === 'partial').length;
+
+  const stats = [
+    { label: 'Connected platforms', value: connected.length, icon: Share2, tint: 'purple' as const },
+    { label: 'Total posts', value: posts.length, icon: Send, tint: 'blue' as const },
+    { label: 'Published', value: publishedCount, icon: CheckCircle2, tint: 'emerald' as const },
+  ];
+
+  const tintClasses: Record<'purple' | 'blue' | 'emerald', string> = {
+    purple: 'bg-purple-50 text-purple-700',
+    blue: 'bg-blue-50 text-blue-700',
+    emerald: 'bg-emerald-50 text-emerald-700',
+  };
+
   return (
-    <div className="max-w-6xl space-y-6">
+    <div className="max-w-6xl mx-auto space-y-8">
       <div>
-        <h1 className="sd-display text-2xl font-bold">Social Deck</h1>
-        <p className="text-xs text-[var(--sd-muted)] mt-1">
+        <h1 className="sd-display text-[26px] font-bold tracking-tight text-[var(--sd-ink)]">
+          Welcome back
+        </h1>
+        <p className="text-sm text-[var(--sd-muted)] mt-1">
           Pick a platform in the sidebar to connect it and manage its posts.
         </p>
+      </div>
+
+      <div className="grid sm:grid-cols-3 gap-4">
+        {stats.map((s) => (
+          <div key={s.label} className="sd-card sd-card-hover p-5 flex items-center gap-4">
+            <div className={`sd-icon-badge w-11 h-11 ${tintClasses[s.tint]}`}>
+              <s.icon className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-2xl font-bold text-[var(--sd-ink)] leading-none">{s.value}</p>
+              <p className="text-xs text-[var(--sd-muted)] mt-1.5">{s.label}</p>
+            </div>
+          </div>
+        ))}
       </div>
 
       <AiAssistantCard />
 
       <div>
-        <h2 className="text-sm font-semibold mb-3">Activity</h2>
-        <div className="space-y-3">
-          <div className="rounded-xl border border-[var(--sd-line)] bg-white p-4">
-            <p className="text-xs font-medium text-gray-600 mb-3">Posts — last 14 days</p>
+        <h2 className="text-[15px] font-bold text-[var(--sd-ink)] mb-3.5">Activity</h2>
+        <div className="space-y-4">
+          <div className="sd-card sd-card-hover p-5">
+            <p className="text-xs font-semibold text-[var(--sd-muted)] mb-4">Posts — last 14 days</p>
             {posts.length === 0 ? (
-              <p className="text-xs text-gray-400">No posts yet.</p>
+              <p className="text-xs text-[var(--sd-subtle)]">No posts yet.</p>
             ) : (
               <MiniBarChart data={postsByDay} />
             )}
           </div>
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div className="rounded-xl border border-[var(--sd-line)] bg-white p-4">
-              <p className="text-xs font-medium text-gray-600 mb-3">Status breakdown</p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="sd-card sd-card-hover p-5">
+              <p className="text-xs font-semibold text-[var(--sd-muted)] mb-4">Status breakdown</p>
               <DonutChart segments={statusBreakdown} />
             </div>
-            <div className="rounded-xl border border-[var(--sd-line)] bg-white p-4">
-              <p className="text-xs font-medium text-gray-600 mb-3">Publishes by platform</p>
+            <div className="sd-card sd-card-hover p-5">
+              <p className="text-xs font-semibold text-[var(--sd-muted)] mb-4">Publishes by platform</p>
               <HorizontalBarList
                 data={platformBreakdown}
                 color={PLATFORM_BAR_COLOR}
@@ -136,26 +166,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid sm:grid-cols-3 gap-3">
-        <div className="rounded-xl border border-[var(--sd-line)] bg-white p-4">
-          <p className="text-xs text-[var(--sd-muted)]">Connected</p>
-          <p className="text-2xl font-bold text-purple-700">{connected.length}</p>
-        </div>
-        <div className="rounded-xl border border-[var(--sd-line)] bg-white p-4">
-          <p className="text-xs text-[var(--sd-muted)]">Total posts</p>
-          <p className="text-2xl font-bold">{posts.length}</p>
-        </div>
-        <div className="rounded-xl border border-[var(--sd-line)] bg-white p-4">
-          <p className="text-xs text-[var(--sd-muted)]">Published</p>
-          <p className="text-2xl font-bold text-emerald-600">
-            {posts.filter((p) => p.status === 'published' || p.status === 'partial').length}
-          </p>
-        </div>
-      </div>
-
       <div>
-        <h2 className="text-sm font-semibold mb-3">Platforms</h2>
-        <div className="grid sm:grid-cols-2 gap-3">
+        <h2 className="text-[15px] font-bold text-[var(--sd-ink)] mb-3.5">Platforms</h2>
+        <div className="grid sm:grid-cols-2 gap-4">
           {platforms.map((p) => {
             const Icon = iconFor(p.id);
             const isSoon = p.status === 'coming_soon';
@@ -170,29 +183,25 @@ export default function DashboardPage() {
                 onClick={(e) => {
                   if (isSoon || !route) e.preventDefault();
                 }}
-                className={`rounded-xl border p-4 flex gap-3 transition-colors ${
+                className={`sd-card flex p-4 gap-3.5 ${
                   isSoon
-                    ? 'border-gray-200 bg-gray-50 opacity-80 cursor-default'
-                    : 'border-[var(--sd-line)] bg-white hover:border-purple-300'
+                    ? 'opacity-70 cursor-default grayscale-[0.3]'
+                    : 'sd-card-link cursor-pointer'
                 }`}
               >
-                <div className="w-10 h-10 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                <div className="sd-icon-badge w-11 h-11 bg-purple-50 text-purple-700 shrink-0">
                   <Icon className="w-5 h-5" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold text-sm">{p.name}</p>
+                    <p className="font-semibold text-sm text-[var(--sd-ink)]">{p.name}</p>
                     {isSoon ? (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                        Coming soon
-                      </span>
+                      <span className="sd-badge bg-amber-100 text-amber-800">Coming soon</span>
                     ) : isConnected ? (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                        Connected
-                      </span>
+                      <span className="sd-badge bg-emerald-100 text-emerald-800">Connected</span>
                     ) : null}
                   </div>
-                  <p className="text-xs text-[var(--sd-muted)] mt-0.5">{p.description}</p>
+                  <p className="text-xs text-[var(--sd-muted)] mt-1 leading-relaxed">{p.description}</p>
                 </div>
               </Link>
             );

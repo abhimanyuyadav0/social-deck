@@ -32,27 +32,18 @@ function ConfirmDisconnectModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
-        <h2 className="font-semibold text-gray-900">Disconnect {label}?</h2>
-        <p className="text-sm text-gray-600 leading-relaxed">
+    <div className="sd-modal-overlay">
+      <div className="sd-modal-panel w-full max-w-sm p-6 space-y-4">
+        <h2 className="font-bold text-[var(--sd-ink)]">Disconnect {label}?</h2>
+        <p className="text-sm text-[var(--sd-muted)] leading-relaxed">
           Posts won&apos;t be able to publish here until you reconnect it. You can reconnect
           anytime from this page.
         </p>
         <div className="flex gap-2 justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50"
-          >
+          <button type="button" onClick={onClose} className="sd-btn sd-btn-secondary px-4 py-2 text-sm">
             Cancel
           </button>
-          <button
-            type="button"
-            disabled={pending}
-            onClick={onConfirm}
-            className="px-4 py-2 text-sm rounded-xl bg-red-600 text-white font-semibold disabled:opacity-50"
-          >
+          <button type="button" disabled={pending} onClick={onConfirm} className="sd-btn sd-btn-danger px-4 py-2 text-sm">
             {pending ? 'Disconnecting…' : 'Disconnect'}
           </button>
         </div>
@@ -94,7 +85,7 @@ function PlatformTabs({ connection, type }: { connection: Connection; type: Plat
 
   return (
     <div>
-      <div className="border-b border-[var(--sd-line)] flex gap-1 overflow-x-auto">
+      <div className="border-b border-[var(--sd-line-soft)] flex gap-1 overflow-x-auto">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -103,7 +94,7 @@ function PlatformTabs({ connection, type }: { connection: Connection; type: Plat
             className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
               active.id === t.id
                 ? 'border-purple-600 text-purple-700'
-                : 'border-transparent text-[var(--sd-muted)] hover:text-[var(--sd-ink)] hover:border-gray-200'
+                : 'border-transparent text-[var(--sd-muted)] hover:text-[var(--sd-ink)] hover:border-[var(--sd-line)]'
             }`}
           >
             {t.label}
@@ -162,13 +153,16 @@ export default function ConnectedPlatformPanel({
 
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="sd-display text-2xl font-bold">{PLATFORM_LABEL[type]}</h1>
-          <p className="text-sm text-[var(--sd-muted)] mt-0.5">Connected as {connection.name}</p>
+          <h1 className="sd-display text-2xl font-bold text-[var(--sd-ink)]">{PLATFORM_LABEL[type]}</h1>
+          <p className="text-sm text-[var(--sd-muted)] mt-1 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            Connected as {connection.name}
+          </p>
         </div>
         <button
           type="button"
           onClick={() => setConfirmingDisconnect(true)}
-          className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-red-600 shrink-0"
+          className="sd-btn sd-btn-ghost text-xs text-[var(--sd-subtle)] hover:text-red-600 px-3 py-1.5 shrink-0"
         >
           <Trash2 className="w-3.5 h-3.5" />
           Disconnect

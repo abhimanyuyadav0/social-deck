@@ -49,7 +49,16 @@ export default function InstagramAccountsPage() {
   };
 
   if (isLoading) {
-    return <p className="text-sm text-gray-400">Loading…</p>;
+    return (
+      <div className="max-w-6xl space-y-6">
+        <div className="sd-skeleton h-8 w-40" />
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="sd-skeleton h-20" />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (accounts.length === 0) {
@@ -61,7 +70,7 @@ export default function InstagramAccountsPage() {
       <InstagramHelpModal open={showHelp} onClose={() => setShowHelp(false)} />
 
       <div>
-        <h1 className="sd-display text-2xl font-bold flex items-center gap-1.5">
+        <h1 className="sd-display text-2xl font-bold flex items-center gap-1.5 text-[var(--sd-ink)]">
           Instagram
           <button
             type="button"
@@ -77,20 +86,16 @@ export default function InstagramAccountsPage() {
         </p>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {accounts.map((c) => (
-          <Link
-            key={c.id}
-            to={`/instagram/${c.id}`}
-            className="rounded-xl border border-[var(--sd-line)] bg-white p-4 flex items-center gap-3 hover:border-purple-300 transition-colors"
-          >
-            <div className="w-11 h-11 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center shrink-0">
+          <Link key={c.id} to={`/instagram/${c.id}`} className="sd-card sd-card-link p-4 flex items-center gap-3.5">
+            <div className="sd-icon-badge w-11 h-11 bg-pink-50 text-pink-600 shrink-0">
               <Instagram className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <p className="font-semibold text-sm truncate">{c.name}</p>
+              <p className="font-semibold text-sm text-[var(--sd-ink)] truncate">{c.name}</p>
               {c.config?.instagramUsername && (
-                <p className="text-xs text-gray-500 truncate">@{c.config.instagramUsername}</p>
+                <p className="text-xs text-[var(--sd-muted)] truncate">@{c.config.instagramUsername}</p>
               )}
             </div>
           </Link>
@@ -100,9 +105,9 @@ export default function InstagramAccountsPage() {
           type="button"
           onClick={connectAnother}
           disabled={startInstagram.isPending}
-          className="rounded-xl border border-dashed border-gray-300 bg-white p-4 flex items-center gap-3 text-gray-500 hover:border-purple-300 hover:text-purple-600 transition-colors disabled:opacity-50"
+          className="rounded-2xl border border-dashed border-[var(--sd-line)] bg-transparent p-4 flex items-center gap-3.5 text-[var(--sd-muted)] hover:border-purple-300 hover:text-purple-600 hover:bg-white transition-colors disabled:opacity-50"
         >
-          <div className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
+          <div className="sd-icon-badge w-11 h-11 bg-[var(--sd-surface-alt)] shrink-0">
             <Plus className="w-5 h-5" />
           </div>
           <span className="text-sm font-medium">

@@ -67,23 +67,23 @@ function ConnectAiModal({
   const info = PROVIDER_INFO[provider];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+    <div className="sd-modal-overlay">
+      <div className="sd-modal-panel w-full max-w-md p-6 space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="font-semibold text-gray-900">Connect AI Assistant</h2>
-            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+            <h2 className="font-bold text-[var(--sd-ink)]">Connect AI Assistant</h2>
+            <p className="text-xs text-[var(--sd-muted)] mt-1 leading-relaxed">
               Used only to generate drafts{provider === 'openai' ? '/images' : ''} you ask for — billing
               stays on your own {info.label} account.
             </p>
           </div>
-          <button type="button" onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">
+          <button type="button" onClick={onClose} className="sd-btn sd-btn-ghost p-1.5 shrink-0" aria-label="Close">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1.5">Provider</label>
+          <label className="block text-xs font-semibold text-[var(--sd-muted)] mb-1.5">Provider</label>
           <div className="grid grid-cols-2 gap-2">
             {(Object.keys(PROVIDER_INFO) as AiProvider[]).map((p) => (
               <button
@@ -92,8 +92,8 @@ function ConnectAiModal({
                 onClick={() => setProvider(p)}
                 className={`px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
                   provider === p
-                    ? 'border-violet-400 bg-violet-50 text-violet-700'
-                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    ? 'border-purple-300 bg-purple-50 text-purple-700'
+                    : 'border-[var(--sd-line-soft)] text-[var(--sd-muted)] hover:bg-[var(--sd-surface-alt)]'
                 }`}
               >
                 {PROVIDER_INFO[p].label}
@@ -108,16 +108,16 @@ function ConnectAiModal({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">{info.label} API key</label>
+          <label className="block text-xs font-semibold text-[var(--sd-muted)] mb-1">{info.label} API key</label>
           <input
             type="password"
             autoComplete="off"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             placeholder={info.keyPlaceholder}
-            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-mono"
+            className="w-full px-3 py-2 rounded-xl border border-[var(--sd-line-soft)] bg-[var(--sd-surface-alt)] text-sm font-mono focus:border-purple-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-purple-500/10 transition-colors"
           />
-          <p className="text-[11px] text-gray-400 mt-1">
+          <p className="text-[11px] text-[var(--sd-subtle)] mt-1">
             Get a key from{' '}
             <a href={info.helpUrl} target="_blank" rel="noreferrer" className="text-purple-600 hover:underline">
               {info.helpLabel}
@@ -126,19 +126,15 @@ function ConnectAiModal({
           </p>
         </div>
 
-        <div className="flex gap-2 justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50"
-          >
+        <div className="flex gap-2 justify-end pt-1">
+          <button type="button" onClick={onClose} className="sd-btn sd-btn-secondary px-4 py-2 text-sm">
             Cancel
           </button>
           <button
             type="button"
             disabled={pending || !info.looksValid(apiKey)}
             onClick={() => onSubmit(provider, apiKey.trim())}
-            className="px-4 py-2 text-sm rounded-xl bg-violet-600 text-white font-semibold disabled:opacity-50"
+            className="sd-btn sd-btn-primary px-4 py-2 text-sm"
           >
             {pending ? 'Connecting…' : 'Connect'}
           </button>
@@ -162,27 +158,18 @@ function ConfirmDisconnectAiModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
-        <h2 className="font-semibold text-gray-900">Disconnect AI Assistant?</h2>
-        <p className="text-sm text-gray-600 leading-relaxed">
+    <div className="sd-modal-overlay">
+      <div className="sd-modal-panel w-full max-w-sm p-6 space-y-4">
+        <h2 className="font-bold text-[var(--sd-ink)]">Disconnect AI Assistant?</h2>
+        <p className="text-sm text-[var(--sd-muted)] leading-relaxed">
           Compose and Auto Run won&apos;t be able to draft posts or images on any platform until
           you reconnect it.
         </p>
         <div className="flex gap-2 justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50"
-          >
+          <button type="button" onClick={onClose} className="sd-btn sd-btn-secondary px-4 py-2 text-sm">
             Cancel
           </button>
-          <button
-            type="button"
-            disabled={pending}
-            onClick={onConfirm}
-            className="px-4 py-2 text-sm rounded-xl bg-red-600 text-white font-semibold disabled:opacity-50"
-          >
+          <button type="button" disabled={pending} onClick={onConfirm} className="sd-btn sd-btn-danger px-4 py-2 text-sm">
             {pending ? 'Disconnecting…' : 'Disconnect'}
           </button>
         </div>
@@ -209,7 +196,10 @@ export default function AiAssistantCard() {
   const retryCountdownMs = useCountdown(lastError?.retryAt ?? null);
 
   return (
-    <div className="rounded-xl border border-violet-200 bg-violet-50/40 p-4 flex items-start gap-3">
+    <div
+      className="sd-card p-4 sm:p-5 flex items-start gap-3.5"
+      style={{ borderColor: '#e9d5ff', background: 'linear-gradient(135deg, #faf5ff 0%, #fdf4ff 100%)' }}
+    >
       <ConnectAiModal
         open={showModal}
         onClose={() => setShowModal(false)}
@@ -242,11 +232,16 @@ export default function AiAssistantCard() {
         }
       />
 
-      <div className="w-10 h-10 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center shrink-0">
+      <div
+        className="sd-icon-badge w-11 h-11 text-white shrink-0"
+        style={{ background: 'var(--sd-accent-grad)', boxShadow: '0 6px 16px -6px rgba(147,51,234,0.45)' }}
+      >
         <Sparkles className="w-5 h-5" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-sm">AI Assistant{hasAi ? ` (${providerLabel})` : ''}</p>
+        <p className="font-semibold text-sm text-[var(--sd-ink)]">
+          AI Assistant{hasAi ? ` (${providerLabel})` : ''}
+        </p>
         <p className="text-xs text-[var(--sd-muted)] mt-0.5">
           Powers drafts and images across every platform&apos;s Compose and Auto Run.
         </p>
@@ -283,31 +278,27 @@ export default function AiAssistantCard() {
           </div>
         )}
       </div>
-      <div className="flex flex-col items-end gap-1 shrink-0">
+      <div className="flex flex-col items-end gap-1.5 shrink-0">
         {hasAi ? (
           <>
-            <span className="text-xs text-emerald-600 font-medium">Connected</span>
+            <span className="sd-badge bg-emerald-100 text-emerald-800">Connected</span>
             <button
               type="button"
               onClick={() => setShowModal(true)}
-              className="text-xs text-purple-600 hover:underline"
+              className="text-xs text-purple-600 hover:underline mt-0.5"
             >
               Update key
             </button>
             <button
               type="button"
               onClick={() => setConfirmingDisconnect(true)}
-              className="text-xs text-gray-500 hover:text-red-600"
+              className="text-xs text-[var(--sd-subtle)] hover:text-red-600"
             >
               Disconnect
             </button>
           </>
         ) : (
-          <button
-            type="button"
-            onClick={() => setShowModal(true)}
-            className="px-3 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-semibold"
-          >
+          <button type="button" onClick={() => setShowModal(true)} className="sd-btn sd-btn-primary px-3.5 py-2 text-xs">
             Connect
           </button>
         )}

@@ -80,31 +80,22 @@ function ConfirmDeleteModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+    <div className="sd-modal-overlay">
+      <div className="sd-modal-panel w-full max-w-md p-6 space-y-4">
         <div className="flex items-start justify-between gap-3">
-          <h2 className="font-semibold text-gray-900">Delete {connectionName}&apos;s briefing?</h2>
-          <button type="button" onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">
+          <h2 className="font-bold text-[var(--sd-ink)]">Delete {connectionName}&apos;s briefing?</h2>
+          <button type="button" onClick={onClose} className="sd-btn sd-btn-ghost p-1.5 shrink-0" aria-label="Close">
             <X className="w-5 h-5" />
           </button>
         </div>
-        <p className="text-sm text-gray-600 leading-relaxed">
+        <p className="text-sm text-[var(--sd-muted)] leading-relaxed">
           Its Auto Run schedule will be removed too. This can&apos;t be undone.
         </p>
         <div className="flex gap-2 justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50"
-          >
+          <button type="button" onClick={onClose} className="sd-btn sd-btn-secondary px-4 py-2 text-sm">
             Cancel
           </button>
-          <button
-            type="button"
-            disabled={pending}
-            onClick={onConfirm}
-            className="px-4 py-2 text-sm rounded-xl bg-red-600 text-white font-semibold disabled:opacity-50"
-          >
+          <button type="button" disabled={pending} onClick={onConfirm} className="sd-btn sd-btn-danger px-4 py-2 text-sm">
             {pending ? 'Deleting…' : 'Delete'}
           </button>
         </div>
@@ -288,11 +279,19 @@ export default function ContextPanel({ connection }: { connection: Connection })
   };
 
   if (isLoading) {
-    return <p className="text-sm text-gray-400">Loading…</p>;
+    return (
+      <div className="space-y-4">
+        <div className="sd-skeleton h-6 w-56" />
+        <div className="grid lg:grid-cols-[1fr_280px] gap-6">
+          <div className="sd-skeleton h-72" />
+          <div className="sd-skeleton h-40" />
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <ConfirmDeleteModal
         open={showDelete}
         connectionName={connection.name}
@@ -303,7 +302,7 @@ export default function ContextPanel({ connection }: { connection: Connection })
 
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="sd-display text-lg font-bold">Briefing & Auto Run</h2>
+          <h2 className="sd-display text-lg font-bold text-[var(--sd-ink)]">Briefing & Auto Run</h2>
           <p className="text-xs text-[var(--sd-muted)] mt-0.5">
             {enabled
               ? `Auto Run is on${auto?.nextRunAt ? ` · next check around ${formatWhen(auto.nextRunAt)}` : ''}`
@@ -315,7 +314,7 @@ export default function ContextPanel({ connection }: { connection: Connection })
             <button
               type="button"
               onClick={() => setShowDelete(true)}
-              className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-red-600"
+              className="inline-flex items-center gap-1.5 text-xs text-[var(--sd-subtle)] hover:text-red-600"
             >
               <Trash2 className="w-3.5 h-3.5" />
               Delete
@@ -327,12 +326,11 @@ export default function ContextPanel({ connection }: { connection: Connection })
             aria-checked={enabled}
             onClick={onToggle}
             disabled={saving}
-            className={`relative w-14 h-8 rounded-full transition-colors shrink-0 ${
-              enabled ? 'bg-purple-600' : 'bg-gray-200'
-            }`}
+            className="relative w-14 h-8 rounded-full transition-colors shrink-0"
+            style={{ background: enabled ? 'var(--sd-accent-grad)' : '#e5e0eb' }}
           >
             <span
-              className={`absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow transition-transform ${
+              className={`absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow-md transition-transform ${
                 enabled ? 'translate-x-6' : 'translate-x-0'
               }`}
             />
@@ -340,62 +338,62 @@ export default function ContextPanel({ connection }: { connection: Connection })
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-[1fr_280px] gap-6 items-start">
-        <div className="rounded-xl border border-violet-200 bg-violet-50/40 p-5 space-y-4">
+      <div className="grid lg:grid-cols-[1fr_280px] gap-5 items-start">
+        <div className="sd-card p-5 sm:p-6 space-y-5" style={{ borderColor: '#e9d5ff', background: 'linear-gradient(180deg, #faf5ff 0%, #ffffff 40%)' }}>
           <div className="space-y-2">
             <label className="block">
-              <span className="text-xs font-medium text-gray-600">Who you are</span>
+              <span className="text-xs font-medium text-[var(--sd-muted)]">Who you are</span>
               <AutoResizeTextarea
                 value={aboutYou}
                 onChange={(e) => setAboutYou(e.target.value)}
                 placeholder="e.g. Full-stack developer at Acme, 5 yrs React/Node, building in public…"
-                className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm"
+                className="mt-1 w-full px-3 py-2 rounded-xl border border-[var(--sd-line-soft)] bg-white text-sm focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-500/10 transition-colors"
               />
             </label>
             <label className="block">
-              <span className="text-xs font-medium text-gray-600">What you&apos;re trying to accomplish</span>
+              <span className="text-xs font-medium text-[var(--sd-muted)]">What you&apos;re trying to accomplish</span>
               <AutoResizeTextarea
                 value={goals}
                 onChange={(e) => setGoals(e.target.value)}
                 placeholder="e.g. Grow following, share learning notes, promote my SaaS…"
-                className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm"
+                className="mt-1 w-full px-3 py-2 rounded-xl border border-[var(--sd-line-soft)] bg-white text-sm focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-500/10 transition-colors"
               />
             </label>
             <label className="block">
-              <span className="text-xs font-medium text-gray-600">References</span>
+              <span className="text-xs font-medium text-[var(--sd-muted)]">References</span>
               <AutoResizeTextarea
                 rows={3}
                 value={references}
                 onChange={(e) => setReferences(e.target.value)}
                 placeholder="Links, projects, stats, talking points — one per line&#10;https://myapp.com&#10;Shipped v2 last week with 40% faster builds"
-                className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-mono text-[13px]"
+                className="mt-1 w-full px-3 py-2 rounded-xl border border-[var(--sd-line-soft)] bg-white text-sm focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-500/10 transition-colors font-mono text-[13px]"
               />
             </label>
             <div className="grid sm:grid-cols-2 gap-2">
               <label className="block">
-                <span className="text-xs font-medium text-gray-600">Voice / tone</span>
+                <span className="text-xs font-medium text-[var(--sd-muted)]">Voice / tone</span>
                 <input
                   value={voice}
                   onChange={(e) => setVoice(e.target.value)}
                   placeholder="Friendly, direct, no jargon"
-                  className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm"
+                  className="mt-1 w-full px-3 py-2 rounded-xl border border-[var(--sd-line-soft)] bg-white text-sm focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-500/10 transition-colors"
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium text-gray-600">Audience</span>
+                <span className="text-xs font-medium text-[var(--sd-muted)]">Audience</span>
                 <input
                   value={audience}
                   onChange={(e) => setAudience(e.target.value)}
                   placeholder="Developers, founders, students…"
-                  className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm"
+                  className="mt-1 w-full px-3 py-2 rounded-xl border border-[var(--sd-line-soft)] bg-white text-sm focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-500/10 transition-colors"
                 />
               </label>
             </div>
           </div>
 
-          <div className="space-y-2 pt-1 border-t border-violet-100">
+          <div className="space-y-2 pt-1 border-t border-[var(--sd-line-soft)]">
             <label className="block">
-              <span className="text-xs font-medium text-gray-600">Topics</span>
+              <span className="text-xs font-medium text-[var(--sd-muted)]">Topics</span>
               <p className="text-[11px] text-[var(--sd-muted)] mt-0.5 mb-1">
                 One theme per line. Auto Run rotates through these so posts stay varied.
               </p>
@@ -404,28 +402,28 @@ export default function ContextPanel({ connection }: { connection: Connection })
                 value={topicsText}
                 onChange={(e) => setTopicsText(e.target.value)}
                 placeholder={'Developer productivity tips\nLessons from shipping features\nCommunity building'}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm"
+                className="w-full px-3 py-2 rounded-xl border border-[var(--sd-line-soft)] bg-white text-sm focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-500/10 transition-colors"
               />
             </label>
             <label className="block">
-              <span className="text-xs font-medium text-gray-600">Standing instructions</span>
+              <span className="text-xs font-medium text-[var(--sd-muted)]">Standing instructions</span>
               <AutoResizeTextarea
                 value={promptHint}
                 onChange={(e) => setPromptHint(e.target.value)}
                 placeholder="e.g. Keep under 400 words, end with a question"
-                className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm"
+                className="mt-1 w-full px-3 py-2 rounded-xl border border-[var(--sd-line-soft)] bg-white text-sm focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-500/10 transition-colors"
               />
             </label>
             <div className="space-y-1.5">
-              <p className="text-xs font-medium text-gray-700">Media with each Auto Run post:</p>
-              <div className="flex flex-wrap gap-3 text-xs text-gray-700">
+              <p className="text-xs font-medium text-[var(--sd-muted)]">Media with each Auto Run post:</p>
+              <div className="flex flex-wrap gap-3 text-xs text-[var(--sd-muted)]">
                 <label className="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
                     name="auto-media-type"
                     checked={mediaType === 'none'}
                     onChange={() => setMediaType('none')}
-                    className="border-gray-300"
+                    className="border-[var(--sd-line)]"
                   />
                   None
                 </label>
@@ -435,7 +433,7 @@ export default function ContextPanel({ connection }: { connection: Connection })
                     name="auto-media-type"
                     checked={mediaType === 'image'}
                     onChange={() => setMediaType('image')}
-                    className="border-gray-300"
+                    className="border-[var(--sd-line)]"
                   />
                   Image (1–4, random)
                 </label>
@@ -455,18 +453,18 @@ export default function ContextPanel({ connection }: { connection: Connection })
                     checked={mediaType === 'video'}
                     disabled={!canGenerateVideo || !isGeminiAi}
                     onChange={() => setMediaType('video')}
-                    className="border-gray-300"
+                    className="border-[var(--sd-line)]"
                   />
                   Video (Reel / Page video)
                 </label>
               </div>
               {mediaType === 'image' && (
                 <div className="flex items-center gap-2 pt-1">
-                  <label className="text-xs text-gray-600">Model:</label>
+                  <label className="text-xs text-[var(--sd-muted)]">Model:</label>
                   <select
                     value={imageModel}
                     onChange={(e) => setImageModel(e.target.value)}
-                    className="px-2 py-1 rounded-lg border border-gray-200 bg-white text-xs"
+                    className="px-2 py-1 rounded-lg border border-[var(--sd-line-soft)] bg-white text-xs"
                   >
                     {imageModelOptions.map((m) => (
                       <option key={m} value={m}>
@@ -478,11 +476,11 @@ export default function ContextPanel({ connection }: { connection: Connection })
               )}
               {mediaType === 'video' && (
                 <div className="flex items-center gap-2 pt-1">
-                  <label className="text-xs text-gray-600">Model:</label>
+                  <label className="text-xs text-[var(--sd-muted)]">Model:</label>
                   <select
                     value={videoModel}
                     onChange={(e) => setVideoModel(e.target.value)}
-                    className="px-2 py-1 rounded-lg border border-gray-200 bg-white text-xs"
+                    className="px-2 py-1 rounded-lg border border-[var(--sd-line-soft)] bg-white text-xs"
                   >
                     {videoModelOptions.map((m) => (
                       <option key={m} value={m}>
@@ -494,7 +492,7 @@ export default function ContextPanel({ connection }: { connection: Connection })
               )}
               {mediaType === 'video' && (
                 <div className="flex items-center gap-2 pt-1">
-                  <label className="text-xs text-gray-600">Duration:</label>
+                  <label className="text-xs text-[var(--sd-muted)]">Duration:</label>
                   <div className="flex flex-wrap gap-1.5">
                     {videoDurationOptions.map((d) => (
                       <button
@@ -504,7 +502,7 @@ export default function ContextPanel({ connection }: { connection: Connection })
                         className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
                           durationSeconds === d
                             ? 'bg-purple-600 text-white border-purple-600'
-                            : 'bg-white border-gray-200 text-gray-700 hover:border-purple-300'
+                            : 'bg-white border-[var(--sd-line-soft)] text-[var(--sd-muted)] hover:border-purple-300'
                         }`}
                       >
                         {d}s
@@ -534,7 +532,7 @@ export default function ContextPanel({ connection }: { connection: Connection })
 
             {mediaType !== 'none' && (
               <label className="block pl-6">
-                <span className="text-xs font-medium text-gray-600">Media style</span>
+                <span className="text-xs font-medium text-[var(--sd-muted)]">Media style</span>
                 <p className="text-[11px] text-[var(--sd-muted)] mt-0.5 mb-1">
                   Describe what the image or video should look like — AI considers this when
                   generating it.
@@ -548,7 +546,7 @@ export default function ContextPanel({ connection }: { connection: Connection })
                       className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors ${
                         imageStyle === style
                           ? 'bg-violet-600 text-white border-violet-600'
-                          : 'bg-white border-gray-200 text-gray-700 hover:border-violet-300'
+                          : 'bg-white border-[var(--sd-line-soft)] text-[var(--sd-muted)] hover:border-violet-300'
                       }`}
                     >
                       {style}
@@ -559,13 +557,13 @@ export default function ContextPanel({ connection }: { connection: Connection })
                   value={imageStyle}
                   onChange={(e) => setImageStyle(e.target.value)}
                   placeholder="e.g. Flat vector illustration, purple and white, no people, clean workspace scene"
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm"
+                  className="w-full px-3 py-2 rounded-xl border border-[var(--sd-line-soft)] bg-white text-sm focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-500/10 transition-colors"
                 />
               </label>
             )}
           </div>
 
-          <div className="space-y-2 pt-1 border-t border-violet-100">
+          <div className="space-y-2 pt-1 border-t border-[var(--sd-line-soft)]">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-purple-600" />
               <p className="font-semibold text-sm">Post gap</p>
@@ -579,7 +577,7 @@ export default function ContextPanel({ connection }: { connection: Connection })
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                     intervalHours === h
                       ? 'bg-purple-600 text-white border-purple-600'
-                      : 'bg-white border-gray-200 text-gray-700 hover:border-purple-300'
+                      : 'bg-white border-[var(--sd-line-soft)] text-[var(--sd-muted)] hover:border-purple-300'
                   }`}
                 >
                   {intervalLabel(h)}
@@ -588,34 +586,29 @@ export default function ContextPanel({ connection }: { connection: Connection })
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => saveAll()}
-            disabled={saving}
-            className="px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-semibold disabled:opacity-50"
-          >
+          <button type="button" onClick={() => saveAll()} disabled={saving} className="sd-btn sd-btn-primary px-5 py-2.5 text-sm">
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
 
         {auto && (
-          <div className="rounded-xl border border-[var(--sd-line)] bg-gray-50 p-4 space-y-3 text-sm lg:sticky lg:top-6">
-            <p className="font-semibold">Status</p>
+          <div className="sd-card p-4 space-y-3 text-sm lg:sticky lg:top-6">
+            <p className="font-semibold text-[var(--sd-ink)]">Status</p>
             <dl className="space-y-1.5 text-xs">
               <div className="flex items-center justify-between gap-2">
-                <dt className="text-gray-500">Last run</dt>
+                <dt className="text-[var(--sd-subtle)]">Last run</dt>
                 <dd>{formatWhen(auto.lastRunAt)}</dd>
               </div>
               <div className="flex items-center justify-between gap-2">
-                <dt className="text-gray-500">Next run</dt>
+                <dt className="text-[var(--sd-subtle)]">Next run</dt>
                 <dd>{formatWhen(auto.nextRunAt)}</dd>
               </div>
               <div className="flex items-center justify-between gap-2">
-                <dt className="text-gray-500">Last status</dt>
+                <dt className="text-[var(--sd-subtle)]">Last status</dt>
                 <dd className="capitalize">{auto.lastStatus || 'idle'}</dd>
               </div>
               <div className="flex items-center justify-between gap-2">
-                <dt className="text-gray-500">Runs completed</dt>
+                <dt className="text-[var(--sd-subtle)]">Runs completed</dt>
                 <dd>{auto.runCount ?? 0}</dd>
               </div>
             </dl>
@@ -633,7 +626,7 @@ export default function ContextPanel({ connection }: { connection: Connection })
                 })
               }
               disabled={runNow.isPending}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-purple-200 bg-white text-purple-700 text-sm font-semibold hover:bg-purple-50 disabled:opacity-50"
+              className="sd-btn sd-btn-secondary w-full px-4 py-2.5 text-sm text-purple-700"
             >
               {runNow.isPending ? (
                 <>

@@ -26,16 +26,16 @@ const STATUS_STYLE: Record<string, string> = {
   running: 'bg-blue-100 text-blue-800',
   paused: 'bg-amber-100 text-amber-800',
   completed: 'bg-emerald-100 text-emerald-800',
-  cleaning_up: 'bg-gray-100 text-gray-600',
-  cleaned_up: 'bg-gray-100 text-gray-600',
+  cleaning_up: 'bg-gray-100 text-[var(--sd-muted)]',
+  cleaned_up: 'bg-gray-100 text-[var(--sd-muted)]',
   failed: 'bg-red-100 text-red-800',
 };
 
 const PART_STATUS_STYLE: Record<string, string> = {
-  pending: 'bg-gray-100 text-gray-600',
+  pending: 'bg-gray-100 text-[var(--sd-muted)]',
   posted: 'bg-emerald-100 text-emerald-800',
   failed: 'bg-red-100 text-red-800',
-  skipped: 'bg-gray-100 text-gray-400 line-through',
+  skipped: 'bg-gray-100 text-[var(--sd-subtle)] line-through',
 };
 
 function formatWhen(iso?: string | null) {
@@ -79,10 +79,10 @@ function ConfirmRemoveModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
-        <h2 className="font-semibold text-gray-900">Remove this series?</h2>
-        <p className="text-sm text-gray-600 leading-relaxed">
+    <div className="sd-modal-overlay">
+      <div className="sd-modal-panel w-full max-w-sm p-6 space-y-4">
+        <h2 className="font-bold text-[var(--sd-ink)]">Remove this series?</h2>
+        <p className="text-sm text-[var(--sd-muted)] leading-relaxed">
           This takes it off this list and deletes its video files from Social Deck.
           {hasLiveContent
             ? " Posted parts stay visible in Post History as a record of what went out — this just stops managing/scheduling this series."
@@ -97,19 +97,10 @@ function ConfirmRemoveModal({
           )}
         </p>
         <div className="flex gap-2 justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50"
-          >
+          <button type="button" onClick={onClose} className="sd-btn sd-btn-secondary px-4 py-2 text-sm">
             Cancel
           </button>
-          <button
-            type="button"
-            disabled={pending}
-            onClick={onConfirm}
-            className="px-4 py-2 text-sm rounded-xl bg-red-600 text-white font-semibold disabled:opacity-50"
-          >
+          <button type="button" disabled={pending} onClick={onConfirm} className="sd-btn sd-btn-danger px-4 py-2 text-sm">
             {pending ? 'Removing…' : 'Remove from Social Deck'}
           </button>
         </div>
@@ -139,7 +130,7 @@ function SeriesCard({ series }: { series: VideoSeries }) {
   const blockingFailedOrder = series.parts.find((p) => p.status === 'failed')?.order;
 
   return (
-    <li className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+    <li className="sd-card sd-card-hover p-4 space-y-3">
       <ConfirmRemoveModal
         open={confirmRemove}
         hasLiveContent={hasLiveContent}
@@ -158,14 +149,14 @@ function SeriesCard({ series }: { series: VideoSeries }) {
 
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-gray-900 line-clamp-2">
+          <p className="text-sm font-medium text-[var(--sd-ink)] line-clamp-2">
             {series.caption || 'Untitled series'}
           </p>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-[var(--sd-subtle)] mt-1">
             {series.parts.length} part{series.parts.length === 1 ? '' : 's'} · {series.segmentSeconds}s
             target · created {formatWhen(series.createdAt)}
           </p>
-          <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
+          <p className="text-xs text-[var(--sd-subtle)] mt-0.5 flex items-center gap-1.5 flex-wrap">
             <span>Post gap: {intervalLabel(series.intervalMinutes)}</span>
             <button
               type="button"
@@ -197,7 +188,7 @@ function SeriesCard({ series }: { series: VideoSeries }) {
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors disabled:opacity-50 ${
                     series.intervalMinutes === m
                       ? 'bg-purple-600 text-white border-purple-600'
-                      : 'bg-white border-gray-200 text-gray-700 hover:border-purple-300'
+                      : 'bg-white border-[var(--sd-line-soft)] text-[var(--sd-muted)] hover:border-purple-300'
                   }`}
                 >
                   {intervalLabel(m)}
@@ -206,11 +197,7 @@ function SeriesCard({ series }: { series: VideoSeries }) {
             </div>
           )}
         </div>
-        <span
-          className={`text-[10px] px-2 py-0.5 rounded-full font-medium capitalize shrink-0 ${
-            STATUS_STYLE[series.status] ?? STATUS_STYLE.scheduled
-          }`}
-        >
+        <span className={`sd-badge shrink-0 ${STATUS_STYLE[series.status] ?? STATUS_STYLE.scheduled}`}>
           {series.status.replace(/_/g, ' ')}
         </span>
       </div>
@@ -222,13 +209,13 @@ function SeriesCard({ series }: { series: VideoSeries }) {
             <li
               key={p.order}
               className={`flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs ${
-                isShort ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50'
+                isShort ? 'bg-amber-50 border border-amber-200' : 'bg-[var(--sd-surface-alt)]'
               }`}
             >
               <span className="flex items-center gap-1.5 min-w-0">
-                <span className="text-gray-500 shrink-0">Part {p.order}</span>
+                <span className="text-[var(--sd-subtle)] shrink-0">Part {p.order}</span>
                 {p.durationSeconds > 0 && (
-                  <span className="text-gray-400 shrink-0">· {formatDuration(p.durationSeconds)}</span>
+                  <span className="text-[var(--sd-subtle)] shrink-0">· {formatDuration(p.durationSeconds)}</span>
                 )}
                 {isShort && (
                   <span className="inline-flex items-center gap-0.5 text-amber-700 shrink-0">
@@ -239,11 +226,7 @@ function SeriesCard({ series }: { series: VideoSeries }) {
                 {p.error && <span className="text-red-500 truncate">{p.error}</span>}
               </span>
               <span className="flex items-center gap-2 shrink-0">
-                <span
-                  className={`px-1.5 py-0.5 rounded-full font-medium capitalize ${PART_STATUS_STYLE[p.status]}`}
-                >
-                  {p.status}
-                </span>
+                <span className={`sd-badge ${PART_STATUS_STYLE[p.status]}`}>{p.status}</span>
                 {p.externalUrl && (
                   <a
                     href={p.externalUrl}
@@ -294,7 +277,7 @@ function SeriesCard({ series }: { series: VideoSeries }) {
                         { onError: (e: Error) => toast.error(e.message) },
                       )
                     }
-                    className="text-gray-400 hover:text-red-600 disabled:opacity-50"
+                    className="text-[var(--sd-subtle)] hover:text-red-600 disabled:opacity-50"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -334,7 +317,7 @@ function SeriesCard({ series }: { series: VideoSeries }) {
       </ul>
 
       {series.status === 'scheduled' && (
-        <p className="text-xs text-gray-500">Next part posts around {formatWhen(series.nextPostAt)}</p>
+        <p className="text-xs text-[var(--sd-subtle)]">Next part posts around {formatWhen(series.nextPostAt)}</p>
       )}
       {series.lastError && (
         <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
@@ -350,7 +333,7 @@ function SeriesCard({ series }: { series: VideoSeries }) {
               pause.mutate(series.id, { onError: (e: Error) => toast.error(e.message) })
             }
             disabled={pause.isPending}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium hover:bg-gray-50 disabled:opacity-50"
+            className="sd-btn sd-btn-secondary px-3 py-1.5 text-xs"
           >
             <Pause className="w-3.5 h-3.5" />
             Pause
@@ -363,7 +346,7 @@ function SeriesCard({ series }: { series: VideoSeries }) {
               resume.mutate(series.id, { onError: (e: Error) => toast.error(e.message) })
             }
             disabled={resume.isPending}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-semibold disabled:opacity-50"
+            className="sd-btn sd-btn-primary px-3 py-1.5 text-xs"
           >
             <Play className="w-3.5 h-3.5" />
             Resume
@@ -372,7 +355,7 @@ function SeriesCard({ series }: { series: VideoSeries }) {
         <button
           type="button"
           onClick={() => setConfirmRemove(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 text-red-600 text-xs font-medium hover:bg-red-50"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 text-red-600 text-xs font-medium hover:bg-red-50 transition-colors"
         >
           <Trash2 className="w-3.5 h-3.5" />
           Remove from Social Deck{hasLiveContent ? ` (${postedCount} live on Instagram)` : ''}
@@ -455,16 +438,16 @@ export default function VideoSeriesSection({ connection }: { connection: Connect
         one by one as separate Reels on a schedule.
       </p>
 
-      <div className="rounded-xl border border-violet-200 bg-violet-50/40 p-5 space-y-4 max-w-3xl">
+      <div className="sd-card p-5 sm:p-6 space-y-4 max-w-3xl" style={{ borderColor: '#e9d5ff', background: 'linear-gradient(180deg, #faf5ff 0%, #ffffff 40%)' }}>
         <label className="block">
-          <span className="text-xs font-medium text-gray-600">Video</span>
+          <span className="text-xs font-medium text-[var(--sd-muted)]">Video</span>
           <p className="text-[11px] text-[var(--sd-muted)] mt-0.5 mb-1">
             Any aspect ratio works — vertical (9:16) posts as-is; horizontal or square video is
             automatically scaled to fit and letterboxed into the Reels frame.
           </p>
-          <label className="mt-1 flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-gray-300 bg-white text-sm cursor-pointer hover:border-purple-300">
-            <Upload className="w-4 h-4 text-gray-400 shrink-0" />
-            <span className="truncate text-gray-600">
+          <label className="mt-1 flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-[var(--sd-line)] bg-white text-sm cursor-pointer hover:border-purple-300">
+            <Upload className="w-4 h-4 text-[var(--sd-subtle)] shrink-0" />
+            <span className="truncate text-[var(--sd-muted)]">
               {videoFile ? videoFile.name : 'Choose a video file (MP4, MOV, WebM)'}
             </span>
             <input
@@ -475,7 +458,7 @@ export default function VideoSeriesSection({ connection }: { connection: Connect
             />
           </label>
           {videoFile && (
-            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-gray-500 px-1">
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[var(--sd-subtle)] px-1">
               <span>{formatBytes(videoFile.size)}</span>
               {videoMeta ? (
                 <>
@@ -497,7 +480,7 @@ export default function VideoSeriesSection({ connection }: { connection: Connect
         </label>
 
         <label className="block">
-          <span className="text-xs font-medium text-gray-600">Clip length</span>
+          <span className="text-xs font-medium text-[var(--sd-muted)]">Clip length</span>
           <p className="text-[11px] text-[var(--sd-muted)] mt-0.5 mb-1">
             How long each cut piece is. Cuts land on the nearest keyframe, so actual clip lengths
             may vary a bit from this target — check each part&apos;s real length after creating
@@ -515,7 +498,7 @@ export default function VideoSeriesSection({ connection }: { connection: Connect
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                   !customSegment && segmentSeconds === s
                     ? 'bg-purple-600 text-white border-purple-600'
-                    : 'bg-white border-gray-200 text-gray-700 hover:border-purple-300'
+                    : 'bg-white border-[var(--sd-line-soft)] text-[var(--sd-muted)] hover:border-purple-300'
                 }`}
               >
                 {s}s
@@ -527,7 +510,7 @@ export default function VideoSeriesSection({ connection }: { connection: Connect
               className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                 customSegment
                   ? 'bg-purple-600 text-white border-purple-600'
-                  : 'bg-white border-gray-200 text-gray-700 hover:border-purple-300'
+                  : 'bg-white border-[var(--sd-line-soft)] text-[var(--sd-muted)] hover:border-purple-300'
               }`}
             >
               Custom
@@ -540,26 +523,26 @@ export default function VideoSeriesSection({ connection }: { connection: Connect
                   max={90}
                   value={segmentSeconds}
                   onChange={(e) => setSegmentSeconds(Number(e.target.value))}
-                  className="w-20 px-2 py-1.5 rounded-lg border border-gray-200 text-xs"
+                  className="w-20 px-2 py-1.5 rounded-lg border border-[var(--sd-line-soft)] text-xs"
                 />
-                <span className="text-xs text-gray-500">seconds (5–90)</span>
+                <span className="text-xs text-[var(--sd-subtle)]">seconds (5–90)</span>
               </div>
             )}
           </div>
         </label>
 
         <label className="block">
-          <span className="text-xs font-medium text-gray-600">Caption</span>
+          <span className="text-xs font-medium text-[var(--sd-muted)]">Caption</span>
           <AutoResizeTextarea
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             placeholder="Base caption — each part gets “· Part N/M” appended automatically"
-            className="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm"
+            className="mt-1 w-full px-3 py-2 rounded-xl border border-[var(--sd-line-soft)] bg-white text-sm focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-500/10 transition-colors"
           />
         </label>
 
         <label className="block">
-          <span className="text-xs font-medium text-gray-600">Post gap</span>
+          <span className="text-xs font-medium text-[var(--sd-muted)]">Post gap</span>
           <p className="text-[11px] text-[var(--sd-muted)] mt-0.5 mb-1">
             How long to wait between parts on the automatic schedule. You can also publish the
             next part manually at any time from its card below, ahead of schedule.
@@ -573,7 +556,7 @@ export default function VideoSeriesSection({ connection }: { connection: Connect
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                   intervalMinutes === m
                     ? 'bg-purple-600 text-white border-purple-600'
-                    : 'bg-white border-gray-200 text-gray-700 hover:border-purple-300'
+                    : 'bg-white border-[var(--sd-line-soft)] text-[var(--sd-muted)] hover:border-purple-300'
                 }`}
               >
                 {intervalLabel(m)}
@@ -586,7 +569,7 @@ export default function VideoSeriesSection({ connection }: { connection: Connect
           type="button"
           onClick={submit}
           disabled={createSeries.isPending}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-semibold disabled:opacity-50"
+          className="sd-btn sd-btn-primary px-5 py-2.5 text-sm"
         >
           {createSeries.isPending ? (
             <>
@@ -600,9 +583,12 @@ export default function VideoSeriesSection({ connection }: { connection: Connect
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-gray-400">Loading…</p>
+        <div className="space-y-3 max-w-3xl">
+          <div className="sd-skeleton h-24" />
+          <div className="sd-skeleton h-24" />
+        </div>
       ) : seriesList.length === 0 ? (
-        <p className="text-sm text-gray-400">No video series yet.</p>
+        <p className="text-sm text-[var(--sd-subtle)]">No video series yet.</p>
       ) : (
         <ul className="space-y-3">
           {seriesList.map((s) => (

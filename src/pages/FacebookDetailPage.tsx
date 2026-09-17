@@ -11,13 +11,13 @@ export default function FacebookDetailPage() {
   );
 
   if (isLoading) {
-    return <p className="text-sm text-gray-400">Loading…</p>;
+    return <p className="text-sm text-[var(--sd-subtle)]">Loading…</p>;
   }
 
   if (!connection || connection.status !== 'connected') {
     return (
       <div className="max-w-6xl space-y-4">
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-[var(--sd-subtle)]">
           This Facebook Page isn&apos;t connected anymore. Go back to{' '}
           <Link to="/facebook" className="text-purple-600 hover:underline">
             Facebook Pages

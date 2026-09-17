@@ -86,12 +86,12 @@ function ConnectCommunityModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+    <div className="sd-modal-overlay">
+      <div className="sd-modal-panel w-full max-w-md p-6 space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="font-semibold text-gray-900">Connect Community</h2>
-            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+            <h2 className="font-bold text-[var(--sd-ink)]">Connect Community</h2>
+            <p className="text-xs text-[var(--sd-muted)] mt-1 leading-relaxed">
               Community issues the developer key — not Social Deck. Sign in to{' '}
               <a
                 href="https://community.timetofuture.com/developer"
@@ -104,17 +104,17 @@ function ConnectCommunityModal({
               </a>
               , create a key (<code className="text-purple-700">cm_...</code>), and paste it below.
             </p>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-[var(--sd-muted)] mt-2">
               You need a Community account first. Posts publish under the Community profile that
               owns the key.
             </p>
           </div>
-          <button type="button" onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">
+          <button type="button" onClick={onClose} className="sd-btn sd-btn-ghost p-1.5 shrink-0" aria-label="Close">
             <X className="w-5 h-5" />
           </button>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">
+          <label className="block text-xs font-semibold text-[var(--sd-muted)] mb-1">
             Community developer key
           </label>
           <input
@@ -123,22 +123,18 @@ function ConnectCommunityModal({
             value={developerKey}
             onChange={(e) => setDeveloperKey(e.target.value)}
             placeholder="cm_..."
-            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-mono"
+            className="w-full px-3 py-2 rounded-xl border border-[var(--sd-line-soft)] bg-[var(--sd-surface-alt)] text-sm font-mono focus:border-purple-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-purple-500/10 transition-colors"
           />
         </div>
-        <div className="flex gap-2 justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50"
-          >
+        <div className="flex gap-2 justify-end pt-1">
+          <button type="button" onClick={onClose} className="sd-btn sd-btn-secondary px-4 py-2 text-sm">
             Cancel
           </button>
           <button
             type="button"
             disabled={pending || !developerKey.trim().startsWith('cm_')}
             onClick={() => onSubmit(developerKey.trim())}
-            className="px-4 py-2 text-sm rounded-xl bg-purple-600 text-white font-semibold disabled:opacity-50"
+            className="sd-btn sd-btn-primary px-4 py-2 text-sm"
           >
             {pending ? 'Connecting…' : 'Connect'}
           </button>
@@ -221,7 +217,7 @@ export default function ConnectPanel({ type }: { type: PlatformType }) {
     startFacebook.isPending;
 
   return (
-    <div className="max-w-xl mx-auto mt-10">
+    <div className="max-w-xl mx-auto mt-6 sm:mt-10">
       <ConnectCommunityModal
         open={showCommunityModal}
         onClose={() => setShowCommunityModal(false)}
@@ -230,14 +226,14 @@ export default function ConnectPanel({ type }: { type: PlatformType }) {
       />
       <HelpModal open={showHelp} onClose={() => setShowHelp(false)} />
 
-      <div className="rounded-2xl border border-[var(--sd-line)] bg-white p-8 text-center space-y-4">
+      <div className="sd-card p-8 sm:p-10 text-center space-y-5">
         <div
-          className={`w-14 h-14 rounded-2xl ${meta.iconBg} ${meta.iconColor} flex items-center justify-center mx-auto`}
+          className={`w-16 h-16 rounded-2xl ${meta.iconBg} ${meta.iconColor} flex items-center justify-center mx-auto shadow-sm`}
         >
           <Icon className="w-7 h-7" />
         </div>
         <div>
-          <h1 className="sd-display text-xl font-bold flex items-center justify-center gap-1.5">
+          <h1 className="sd-display text-xl font-bold flex items-center justify-center gap-1.5 text-[var(--sd-ink)]">
             {meta.label}
             <button
               type="button"
@@ -248,13 +244,13 @@ export default function ConnectPanel({ type }: { type: PlatformType }) {
               <CircleAlert className="w-4 h-4" />
             </button>
           </h1>
-          <p className="text-sm text-[var(--sd-muted)] mt-1">{meta.description}</p>
+          <p className="text-sm text-[var(--sd-muted)] mt-2 leading-relaxed max-w-sm mx-auto">{meta.description}</p>
         </div>
         {type === 'community' ? (
           <button
             type="button"
             onClick={() => setShowCommunityModal(true)}
-            className="px-5 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-semibold"
+            className="sd-btn sd-btn-primary px-6 py-2.5 text-sm"
           >
             Connect Community
           </button>
@@ -263,7 +259,7 @@ export default function ConnectPanel({ type }: { type: PlatformType }) {
             type="button"
             onClick={startOAuth}
             disabled={connecting}
-            className="px-5 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-semibold disabled:opacity-50"
+            className="sd-btn sd-btn-primary px-6 py-2.5 text-sm"
           >
             {connecting ? 'Redirecting…' : `Connect ${meta.label}`}
           </button>

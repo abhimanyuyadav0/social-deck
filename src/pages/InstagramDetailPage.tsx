@@ -11,13 +11,13 @@ export default function InstagramDetailPage() {
   );
 
   if (isLoading) {
-    return <p className="text-sm text-gray-400">Loading…</p>;
+    return <p className="text-sm text-[var(--sd-subtle)]">Loading…</p>;
   }
 
   if (!connection || connection.status !== 'connected') {
     return (
       <div className="max-w-6xl space-y-4">
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-[var(--sd-subtle)]">
           This Instagram account isn&apos;t connected anymore. Go back to{' '}
           <Link to="/instagram" className="text-purple-600 hover:underline">
             Instagram accounts

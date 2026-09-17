@@ -56,24 +56,24 @@ export default function DonutChart({
               })}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-lg font-bold text-gray-900">{total}</span>
-          {total > 0 && <span className="text-[10px] text-gray-400">{centerLabel}</span>}
+          <span className="text-xl font-bold text-[var(--sd-ink)]">{total}</span>
+          {total > 0 && <span className="text-[10px] text-[var(--sd-subtle)]">{centerLabel}</span>}
         </div>
       </div>
-      <ul className="space-y-1.5 text-xs min-w-0">
+      <ul className="space-y-2 text-xs min-w-0">
         {total === 0 ? (
-          <li className="text-gray-400">No posts yet</li>
+          <li className="text-[var(--sd-subtle)]">No posts yet</li>
         ) : (
           segments
             .filter((s) => s.value > 0)
             .map((s) => (
-              <li key={s.label} className="flex items-center gap-1.5">
+              <li key={s.label} className="flex items-center gap-2">
                 <span
-                  className="w-2 h-2 rounded-full shrink-0"
-                  style={{ backgroundColor: s.color }}
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: s.color, boxShadow: `0 0 0 3px ${s.color}1a` }}
                 />
-                <span className="capitalize text-gray-600 truncate">{s.label}</span>
-                <span className="font-semibold text-gray-900 ml-auto pl-2">{s.value}</span>
+                <span className="capitalize text-[var(--sd-muted)] truncate">{s.label}</span>
+                <span className="font-semibold text-[var(--sd-ink)] ml-auto pl-2">{s.value}</span>
               </li>
             ))
         )}
