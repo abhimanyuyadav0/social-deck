@@ -15,6 +15,7 @@ import {
   X,
   ChevronDown,
   Cpu,
+  Store,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAiConfigs } from '@/api/services/socialDeck';
@@ -41,6 +42,7 @@ const navSections: NavSection[] = [
   {
     title: 'Channels',
     items: [
+      { to: '/google-business', label: 'Google Business', icon: Store, brandColor: '#4285f4', badge: 'Auto-Reply' },
       { to: '/linkedin', label: 'LinkedIn', icon: Linkedin, brandColor: '#0a66c2' },
       { to: '/instagram', label: 'Instagram', icon: Instagram, brandColor: '#e1306c' },
       { to: '/facebook', label: 'Facebook', icon: Facebook, brandColor: '#1877f2' },
@@ -70,6 +72,7 @@ function initialsFor(email?: string | null) {
 
 function getPageTitle(pathname: string) {
   if (pathname === '/') return 'Overview & Analytics';
+  if (pathname.startsWith('/google-business')) return 'Google Business Profile';
   if (pathname.startsWith('/linkedin')) return 'LinkedIn Channel';
   if (pathname.startsWith('/instagram')) return 'Instagram Accounts';
   if (pathname.startsWith('/facebook')) return 'Facebook Pages';

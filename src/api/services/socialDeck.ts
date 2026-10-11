@@ -69,6 +69,8 @@ const keys = {
   aiContexts: ['social-deck', 'ai-contexts'] as const,
   autoRun: ['social-deck', 'auto-run'] as const,
   videoSeries: ['social-deck', 'video-series'] as const,
+  googleBusinessConfig: ['social-deck', 'google-business-config'] as const,
+  googleBusinessReviews: ['social-deck', 'google-business-reviews'] as const,
 };
 
 export type AiProvider = 'openai' | 'gemini' | 'claude';
@@ -644,4 +646,175 @@ export function usePublishVideoSeriesPartNow() {
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.videoSeries }),
   });
 }
+
+export type AutoReplyTemplates = {
+  fiveStar?: string[];
+  fourStar?: string[];
+  threeStar?: string[];
+  twoStar?: string[];
+  oneStar?: string[];
+};
+
+export type GoogleBusinessConfig = {
+  connected: boolean;
+  isConfigured: boolean;
+  connectionId?: string;
+  name?: string;
+  config?: {
+    googleAccountId?: string;
+    googleAccountName?: string;
+    googleLocationId?: string;
+    googleLocationName?: string;
+    googleLocationAddress?: string;
+    googleLocationPhone?: string;
+    googleLocationWebsite?: string;
+    googlePlaceId?: string;
+    googleReviewUrl?: string;
+    autoReplyEnabled?: boolean;
+    autoReplyMode?: 'templates' | 'ai';
+    autoReplyDelayMinutes?: number;
+    autoReplyNotificationEmail?: string;
+    autoReplyTemplates?: AutoReplyTemplates;
+    totalReviewsCount?: number;
+    averageRating?: number;
+    linkedAt?: string;
+  };
+  lastUsedAt?: string;
+};
+
+export type GoogleReview = {
+  _id: string;
+  connectionId: string;
+  googleReviewId: string;
+  reviewerName: string;
+  reviewerPhotoUrl?: string;
+  starRating: number;
+  comment?: string;
+  reviewCreatedAt: string;
+  replyStatus: 'pending' | 'replied' | 'failed' | 'manual';
+  replyText?: string;
+  repliedAt?: string;
+  replySource?: 'template_auto' | 'ai_auto' | 'manual';
+  replyError?: string;
+  simulated?: boolean;
+};
+
+export function useStartGoogleBusinessConnect() {
+  return useMutation({
+    mutationFn: () =>
+      api<{ success: boolean; data: { url: string } }>(
+        '/social-deck/connections/google-business/start',
+      ),
+  });
+}
+
+export function useConnectDemoGoogleBusiness() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      api<{ success: boolean; data: { connection: Connection } }>(
+        '/social-deck/connections/google-business/demo',
+        { method: 'POST', body: JSON.stringify({}) },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.connections });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessConfig });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessReviews });
+    },
+  });
+}
+
+export function useGoogleBusinessConfig() {
+  return useQuery({
+    queryKey: keys.googleBusinessConfig,
+    queryFn: () =>
+      api<{ success: boolean; data: GoogleBusinessConfig }>(
+        '/social-deck/connections/google-business/config',
+      ),
+  });
+}
+
+export function useUpdateGoogleBusinessConfig() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: {
+      autoReplyEnabled?: boolean;
+      autoReplyMode?: 'templates' | 'ai';
+      autoReplyDelayMinutes?: number;
+      autoReplyNotificationEmail?: string;
+      autoReplyTemplates?: AutoReplyTemplates;
+      googleLocationName?: string;
+      googleReviewUrl?: string;
+    }) =>
+      api<{ success: boolean; data: { config: GoogleBusinessConfig['config'] } }>(
+        '/social-deck/connections/google-business/config',
+        { method: 'PUT', body: JSON.stringify(body) },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.googleBusinessConfig });
+      qc.invalidateQueries({ queryKey: keys.connections });
+    },
+  });
+}
+
+export function useGoogleReviews(params: { starRating?: string; replyStatus?: string } = {}) {
+  const qs = new URLSearchParams();
+  if (params.starRating) qs.set('starRating', params.starRating);
+  if (params.replyStatus) qs.set('replyStatus', params.replyStatus);
+  const qStr = qs.toString();
+
+  return useQuery({
+    queryKey: [...keys.googleBusinessReviews, params.starRating, params.replyStatus],
+    queryFn: () =>
+      api<{ success: boolean; data: { reviews: GoogleReview[]; total: number } }>(
+        `/social-deck/connections/google-business/reviews${qStr ? `?${qStr}` : ''}`,
+      ),
+  });
+}
+
+export function useSyncGoogleReviews() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      api<{ success: boolean; message: string; data: { processedCount: number } }>(
+        '/social-deck/connections/google-business/reviews/sync',
+        { method: 'POST', body: JSON.stringify({}) },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.googleBusinessReviews });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessConfig });
+    },
+  });
+}
+
+export function useReplyGoogleReview() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ reviewId, replyText }: { reviewId: string; replyText: string }) =>
+      api<{ success: boolean; data: { review: GoogleReview } }>(
+        `/social-deck/connections/google-business/reviews/${reviewId}/reply`,
+        { method: 'POST', body: JSON.stringify({ replyText }) },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.googleBusinessReviews });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessConfig });
+    },
+  });
+}
+
+export function useSimulateGoogleReview() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { reviewerName: string; starRating: number; comment: string }) =>
+      api<{ success: boolean; message: string; data: { review: GoogleReview } }>(
+        '/social-deck/connections/google-business/reviews/simulate',
+        { method: 'POST', body: JSON.stringify(body) },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.googleBusinessReviews });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessConfig });
+    },
+  });
+}
+
 

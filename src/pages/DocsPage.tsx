@@ -178,7 +178,7 @@ export default function DocsPage() {
             </span>
             <div>
               <h2 className="font-semibold text-[var(--sd-ink)]">Community</h2>
-              <p className="text-xs text-[var(--sd-muted)]">Community by Time To Future Pvt. Ltd.</p>
+              <p className="text-xs text-[var(--sd-muted)]">Community</p>
             </div>
           </div>
           <CommunityGuideContent />

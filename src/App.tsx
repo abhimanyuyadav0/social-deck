@@ -8,6 +8,7 @@ import SignupPage from '@/pages/SignupPage';
 import VerifyEmailPage from '@/pages/VerifyEmailPage';
 import DashboardPage from '@/pages/DashboardPage';
 import PlatformPage from '@/pages/PlatformPage';
+import GoogleBusinessPage from '@/pages/GoogleBusinessPage';
 import InstagramAccountsPage from '@/pages/InstagramAccountsPage';
 import InstagramDetailPage from '@/pages/InstagramDetailPage';
 import FacebookPagesPage from '@/pages/FacebookPagesPage';
@@ -32,6 +33,7 @@ export default function App() {
           }
         >
           <Route index element={<DashboardPage />} />
+          <Route path="google-business" element={<GoogleBusinessPage />} />
           <Route path="linkedin" element={<PlatformPage type="linkedin" />} />
           <Route path="instagram" element={<InstagramAccountsPage />} />
           <Route path="instagram/:connectionId" element={<InstagramDetailPage />} />
