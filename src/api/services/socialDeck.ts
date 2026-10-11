@@ -71,6 +71,7 @@ const keys = {
   videoSeries: ['social-deck', 'video-series'] as const,
   googleBusinessConfig: ['social-deck', 'google-business-config'] as const,
   googleBusinessReviews: ['social-deck', 'google-business-reviews'] as const,
+  googleBusinessLocations: ['social-deck', 'google-business-locations'] as const,
 };
 
 export type AiProvider = 'openai' | 'gemini' | 'claude';
@@ -670,6 +671,25 @@ export type AutoReplyTemplates = {
   threeStar?: string[];
   twoStar?: string[];
   oneStar?: string[];
+  ratingOnlyFiveStar?: string[];
+  ratingOnlyFourStar?: string[];
+  ratingOnlyCritical?: string[];
+};
+
+export type GoogleBusinessLocation = {
+  id: string;
+  name: string;
+  locationName: string;
+  address: string;
+  phone?: string;
+  website?: string;
+  placeId?: string;
+  reviewUrl?: string;
+  rating: number;
+  totalReviews: number;
+  status: string;
+  lastUsedAt?: string;
+  isCurrent?: boolean;
 };
 
 export type GoogleBusinessConfig = {
@@ -716,6 +736,88 @@ export type GoogleReview = {
   simulated?: boolean;
 };
 
+export function useGoogleBusinessLocations() {
+  return useQuery({
+    queryKey: keys.googleBusinessLocations,
+    queryFn: () =>
+      api<{ success: boolean; data: { locations: GoogleBusinessLocation[]; activeId: string } }>(
+        '/social-deck/connections/google-business/locations',
+      ),
+  });
+}
+
+export function useAddGoogleBusinessLocation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: {
+      name: string;
+      placeId?: string;
+      address?: string;
+      phone?: string;
+      website?: string;
+    }) =>
+      api<{ success: boolean; message: string; data: { location: any } }>(
+        '/social-deck/connections/google-business/locations',
+        { method: 'POST', body: JSON.stringify(body) },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.googleBusinessLocations });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessConfig });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessReviews });
+      qc.invalidateQueries({ queryKey: keys.connections });
+    },
+  });
+}
+
+export function useSwitchGoogleBusinessLocation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (connectionId: string) =>
+      api<{ success: boolean; message: string; data: { connectionId: string; config: any; name: string } }>(
+        '/social-deck/connections/google-business/locations/switch',
+        { method: 'POST', body: JSON.stringify({ connectionId }) },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.googleBusinessLocations });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessConfig });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessReviews });
+    },
+  });
+}
+
+export function useRefreshGoogleBusinessLocation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (connectionId?: string | void) =>
+      api<{ success: boolean; message: string; data: { config: any; name: string } }>(
+        '/social-deck/connections/google-business/locations/refresh',
+        { method: 'POST', body: JSON.stringify({ connectionId: connectionId || undefined }) },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.googleBusinessLocations });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessConfig });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessReviews });
+    },
+  });
+}
+
+export function useDeleteGoogleBusinessLocation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (connectionId: string) =>
+      api<{ success: boolean; message: string; data: { nextActiveId?: string } }>(
+        `/social-deck/connections/google-business/locations/${connectionId}`,
+        { method: 'DELETE' },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.googleBusinessLocations });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessConfig });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessReviews });
+      qc.invalidateQueries({ queryKey: keys.connections });
+    },
+  });
+}
+
 export function useStartGoogleBusinessConnect() {
   return useMutation({
     mutationFn: () =>
@@ -737,16 +839,17 @@ export function useConnectDemoGoogleBusiness() {
       qc.invalidateQueries({ queryKey: keys.connections });
       qc.invalidateQueries({ queryKey: keys.googleBusinessConfig });
       qc.invalidateQueries({ queryKey: keys.googleBusinessReviews });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessLocations });
     },
   });
 }
 
-export function useGoogleBusinessConfig() {
+export function useGoogleBusinessConfig(connectionId?: string) {
   return useQuery({
-    queryKey: keys.googleBusinessConfig,
+    queryKey: [...keys.googleBusinessConfig, connectionId],
     queryFn: () =>
       api<{ success: boolean; data: GoogleBusinessConfig }>(
-        '/social-deck/connections/google-business/config',
+        `/social-deck/connections/google-business/config${connectionId ? `?connectionId=${connectionId}` : ''}`,
       ),
   });
 }
@@ -755,33 +858,40 @@ export function useUpdateGoogleBusinessConfig() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: {
+      connectionId?: string;
       autoReplyEnabled?: boolean;
       autoReplyMode?: 'templates' | 'ai';
       autoReplyDelayMinutes?: number;
       autoReplyNotificationEmail?: string;
       autoReplyTemplates?: AutoReplyTemplates;
       googleLocationName?: string;
+      googleLocationAddress?: string;
+      googleLocationPhone?: string;
+      googleLocationWebsite?: string;
+      googlePlaceId?: string;
       googleReviewUrl?: string;
     }) =>
-      api<{ success: boolean; data: { config: GoogleBusinessConfig['config'] } }>(
+      api<{ success: boolean; data: { config: GoogleBusinessConfig['config']; name?: string } }>(
         '/social-deck/connections/google-business/config',
         { method: 'PUT', body: JSON.stringify(body) },
       ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.googleBusinessConfig });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessLocations });
       qc.invalidateQueries({ queryKey: keys.connections });
     },
   });
 }
 
-export function useGoogleReviews(params: { starRating?: string; replyStatus?: string } = {}) {
+export function useGoogleReviews(params: { starRating?: string; replyStatus?: string; connectionId?: string } = {}) {
   const qs = new URLSearchParams();
   if (params.starRating) qs.set('starRating', params.starRating);
   if (params.replyStatus) qs.set('replyStatus', params.replyStatus);
+  if (params.connectionId) qs.set('connectionId', params.connectionId);
   const qStr = qs.toString();
 
   return useQuery({
-    queryKey: [...keys.googleBusinessReviews, params.starRating, params.replyStatus],
+    queryKey: [...keys.googleBusinessReviews, params.starRating, params.replyStatus, params.connectionId],
     queryFn: () =>
       api<{ success: boolean; data: { reviews: GoogleReview[]; total: number } }>(
         `/social-deck/connections/google-business/reviews${qStr ? `?${qStr}` : ''}`,
@@ -792,14 +902,15 @@ export function useGoogleReviews(params: { starRating?: string; replyStatus?: st
 export function useSyncGoogleReviews() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () =>
+    mutationFn: (connectionId?: string | void) =>
       api<{ success: boolean; message: string; data: { processedCount: number } }>(
         '/social-deck/connections/google-business/reviews/sync',
-        { method: 'POST', body: JSON.stringify({}) },
+        { method: 'POST', body: JSON.stringify({ connectionId: connectionId || undefined }) },
       ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.googleBusinessReviews });
       qc.invalidateQueries({ queryKey: keys.googleBusinessConfig });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessLocations });
     },
   });
 }
@@ -807,22 +918,33 @@ export function useSyncGoogleReviews() {
 export function useReplyGoogleReview() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ reviewId, replyText }: { reviewId: string; replyText: string }) =>
+    mutationFn: ({ reviewId, replyText, connectionId }: { reviewId: string; replyText: string; connectionId?: string }) =>
       api<{ success: boolean; data: { review: GoogleReview } }>(
         `/social-deck/connections/google-business/reviews/${reviewId}/reply`,
-        { method: 'POST', body: JSON.stringify({ replyText }) },
+        { method: 'POST', body: JSON.stringify({ replyText, connectionId }) },
       ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.googleBusinessReviews });
       qc.invalidateQueries({ queryKey: keys.googleBusinessConfig });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessLocations });
     },
+  });
+}
+
+export function useDraftGoogleReviewReply() {
+  return useMutation({
+    mutationFn: ({ reviewId, connectionId }: { reviewId: string; connectionId?: string }) =>
+      api<{ success: boolean; data: { draftText: string; source: string } }>(
+        `/social-deck/connections/google-business/reviews/${reviewId}/draft`,
+        { method: 'POST', body: JSON.stringify({ connectionId }) },
+      ),
   });
 }
 
 export function useSimulateGoogleReview() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: { reviewerName: string; starRating: number; comment: string }) =>
+    mutationFn: (body: { reviewerName: string; starRating: number; comment?: string; connectionId?: string }) =>
       api<{ success: boolean; message: string; data: { review: GoogleReview } }>(
         '/social-deck/connections/google-business/reviews/simulate',
         { method: 'POST', body: JSON.stringify(body) },
@@ -830,8 +952,79 @@ export function useSimulateGoogleReview() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.googleBusinessReviews });
       qc.invalidateQueries({ queryKey: keys.googleBusinessConfig });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessLocations });
     },
   });
 }
+
+export interface GooglePlaceSearchResult {
+  placeId: string;
+  name: string;
+  address: string;
+  rating: number;
+  userRatingsTotal: number;
+  reviewUrl: string;
+  mapUrl: string;
+}
+
+export interface DiscoveredGoogleLocation {
+  source: string;
+  locationId?: string;
+  name: string;
+  address: string;
+  phone?: string;
+  website?: string;
+  placeId?: string;
+  rating?: number;
+  totalReviews?: number;
+  reviewUrl?: string;
+  mapUrl?: string;
+}
+
+export function useSearchGooglePlaces(query: string) {
+  const trimmed = query.trim();
+  return useQuery({
+    queryKey: ['googlePlacesSearch', trimmed],
+    queryFn: () =>
+      api<{ success: boolean; data: { places: GooglePlaceSearchResult[] } }>(
+        `/social-deck/connections/google-business/search?query=${encodeURIComponent(trimmed)}`,
+      ),
+    enabled: trimmed.length >= 2,
+    staleTime: 60000,
+  });
+}
+
+export function useDiscoverGoogleLocations(connectionId?: string) {
+  return useQuery({
+    queryKey: ['googleDiscoverLocations', connectionId],
+    queryFn: () =>
+      api<{
+        success: boolean;
+        data: {
+          accountName: string;
+          locations: DiscoveredGoogleLocation[];
+        };
+      }>(
+        `/social-deck/connections/google-business/discover${connectionId ? `?connectionId=${connectionId}` : ''}`,
+      ),
+  });
+}
+
+export function useLinkGooglePlaceId() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ connectionId, placeId }: { connectionId: string; placeId: string }) =>
+      api<{ success: boolean; message: string; data: { connection: any } }>(
+        '/social-deck/connections/google-business/link-place',
+        { method: 'POST', body: JSON.stringify({ connectionId, placeId }) },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.googleBusinessConfig });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessLocations });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessReviews });
+    },
+  });
+}
+
 
 
