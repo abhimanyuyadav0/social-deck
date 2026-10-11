@@ -1394,6 +1394,27 @@ export default function GoogleBusinessPage() {
             </a>
           </div>
 
+          {/* Direct Google Maps sync explanation workflow note */}
+          <div className="p-3.5 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50/70 via-blue-50/50 to-white text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-indigo-950 shadow-2xs">
+            <div className="space-y-0.5">
+              <span className="font-bold flex items-center gap-1.5 text-indigo-900">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                Google Maps Auto-Reply Workflow
+              </span>
+              <p className="text-[11px] text-indigo-800 leading-relaxed">
+                Social Deck automatically generated personalized 5★ and critical-rating responses for your reviews. Click <strong className="text-indigo-950 font-bold">"Copy & Post on Google Maps"</strong> on any review below to publish the response directly to your Google Maps listing!
+              </p>
+            </div>
+            <a
+              href={reviewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-xs shrink-0 cursor-pointer"
+            >
+              Open Google Reviews <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+
           {/* Filters Bar */}
           <div className="p-4 rounded-xl border border-[var(--sd-border)] bg-[var(--sd-card)] flex flex-wrap items-center justify-between gap-3 shadow-xs">
             <div className="flex items-center gap-2">
@@ -1587,37 +1608,58 @@ export default function GoogleBusinessPage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between pt-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-100">
                       {rev.replyStatus === 'replied' || rev.replyText ? (
-                        <span className="text-[11px] text-emerald-700 font-medium flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> Response published
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
+                            <Sparkles className="w-3.5 h-3.5 text-purple-600" /> Auto-Response Ready in Deck
+                          </span>
+                        </div>
                       ) : (
                         <span className="text-[11px] text-amber-700 font-medium flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> Awaiting response
+                          <Clock className="w-3.5 h-3.5" /> Awaiting response
                         </span>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setReplyingReviewId(rev._id);
-                          setManualReplyText(rev.replyText || '');
-                        }}
-                        className={`text-xs font-semibold flex items-center gap-1 cursor-pointer ${
-                          rev.replyText
-                            ? 'text-blue-600 hover:text-blue-800'
-                            : 'px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-xs'
-                        }`}
-                      >
-                        {rev.replyText ? (
-                          'Edit / Overwrite Reply'
-                        ) : (
-                          <>
-                            <MessageSquare className="w-3 h-3" />
-                            Reply to Review
-                          </>
+                      <div className="flex items-center gap-2">
+                        {rev.replyText && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(rev.replyText || '');
+                              toast.success('Response copied to clipboard! Opening Google Maps review...');
+                              window.open(reviewUrl, '_blank', 'noopener,noreferrer');
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-colors shadow-2xs cursor-pointer"
+                            title="Copy this generated response and open Google Maps to submit it"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                            Copy & Post on Google Maps
+                            <ExternalLink className="w-3 h-3 text-indigo-500" />
+                          </button>
                         )}
-                      </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReplyingReviewId(rev._id);
+                            setManualReplyText(rev.replyText || '');
+                          }}
+                          className={`text-xs font-semibold flex items-center gap-1 cursor-pointer ${
+                            rev.replyText
+                              ? 'text-gray-500 hover:text-gray-800 px-2.5 py-1'
+                              : 'px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-xs'
+                          }`}
+                        >
+                          {rev.replyText ? (
+                            'Edit Response'
+                          ) : (
+                            <>
+                              <MessageSquare className="w-3 h-3" />
+                              Reply to Review
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
