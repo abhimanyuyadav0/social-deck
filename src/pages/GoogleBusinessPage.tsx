@@ -20,9 +20,10 @@ import {
   Trash2,
   Check,
   Zap,
-  Building2,
   Mail,
   ShieldCheck,
+  CircleHelp,
+  Unlink,
 } from 'lucide-react';
 import {
   useGoogleBusinessConfig,
@@ -32,10 +33,11 @@ import {
   useReplyGoogleReview,
   useSimulateGoogleReview,
   useStartGoogleBusinessConnect,
-  useConnectDemoGoogleBusiness,
+  useDisconnectGoogleBusiness,
   useConnections,
   type AutoReplyTemplates,
 } from '@/api/services/socialDeck';
+import { GoogleBusinessHelpModal } from '@/components/ConnectorHelpModals';
 
 type TabKey = 'rules' | 'reviews' | 'get-reviews' | 'details';
 
@@ -47,6 +49,7 @@ export default function GoogleBusinessPage() {
 
   // Simulation modal state
   const [simulateOpen, setSimulateOpen] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [simName, setSimName] = useState('Ananya Roy');
   const [simRating, setSimRating] = useState(5);
   const [simComment, setSimComment] = useState('Excellent experience! The team went above and beyond.');
@@ -66,12 +69,12 @@ export default function GoogleBusinessPage() {
   const replyReview = useReplyGoogleReview();
   const simulateReview = useSimulateGoogleReview();
   const startConnect = useStartGoogleBusinessConnect();
-  const connectDemo = useConnectDemoGoogleBusiness();
+  const disconnectGoogle = useDisconnectGoogleBusiness();
   const { refetch: refetchConnections } = useConnections();
 
+  const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
   const config = configData?.data?.config;
   const isConnected = configData?.data?.connected;
-  const isConfigured = configData?.data?.isConfigured;
 
   // Local form state for Auto-Reply Rules
   const [autoReplyEnabled, setAutoReplyEnabled] = useState(true);
@@ -134,13 +137,16 @@ export default function GoogleBusinessPage() {
     });
   };
 
-  const handleConnectDemo = () => {
-    connectDemo.mutate(undefined, {
+
+  const handleDisconnect = () => {
+    disconnectGoogle.mutate(undefined, {
       onSuccess: () => {
-        toast.success('Connected Time to Future Google Business Profile!');
+        toast.success('Google Business Profile disconnected');
+        setDisconnectModalOpen(false);
+        refetchConnections();
       },
-      onError: (err) => {
-        toast.error(err.message || 'Failed to connect demo profile');
+      onError: (err: any) => {
+        toast.error(err?.message || 'Failed to disconnect');
       },
     });
   };
@@ -254,6 +260,8 @@ export default function GoogleBusinessPage() {
 
   return (
     <div className="max-w-6xl space-y-6 pb-12">
+      <GoogleBusinessHelpModal open={showHelp} onClose={() => setShowHelp(false)} />
+
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--sd-border)] pb-6">
         <div className="flex items-center gap-3">
@@ -265,6 +273,14 @@ export default function GoogleBusinessPage() {
               <h1 className="sd-display text-2xl font-bold text-[var(--sd-ink)]">
                 Google Business Profile
               </h1>
+              <button
+                type="button"
+                onClick={() => setShowHelp(true)}
+                className="text-gray-400 hover:text-blue-600 transition-colors"
+                title="Setup guide & redirect URI instructions"
+              >
+                <CircleHelp className="w-5 h-5" />
+              </button>
               {isConnected ? (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -303,29 +319,28 @@ export default function GoogleBusinessPage() {
                 <Zap className="w-3.5 h-3.5" />
                 Test Auto-Reply
               </button>
+              <button
+                type="button"
+                onClick={() => setDisconnectModalOpen(true)}
+                disabled={disconnectGoogle.isPending}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 transition-colors shadow-xs"
+                title="Disconnect Google Business Profile"
+              >
+                <Unlink className="w-3.5 h-3.5 text-red-600" />
+                {disconnectGoogle.isPending ? 'Disconnecting...' : 'Disconnect'}
+              </button>
             </>
           ) : (
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={handleConnectDemo}
-                disabled={connectDemo.isPending}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg border border-blue-500/30 bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors shadow-sm"
+                onClick={handleConnectGoogle}
+                disabled={startConnect.isPending}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors shadow-sm cursor-pointer"
               >
-                <Building2 className="w-3.5 h-3.5" />
-                {connectDemo.isPending ? 'Connecting...' : 'Connect Demo Profile'}
+                <Store className="w-3.5 h-3.5" />
+                {startConnect.isPending ? 'Starting...' : 'Connect with Google'}
               </button>
-              {isConfigured && (
-                <button
-                  type="button"
-                  onClick={handleConnectGoogle}
-                  disabled={startConnect.isPending}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors shadow-sm"
-                >
-                  <Store className="w-3.5 h-3.5" />
-                  {startConnect.isPending ? 'Starting...' : 'Connect with Google'}
-                </button>
-              )}
             </div>
           )}
         </div>
@@ -1123,6 +1138,26 @@ export default function GoogleBusinessPage() {
               </p>
             </div>
           </div>
+
+          {isConnected && (
+            <div className="mt-8 pt-6 border-t border-red-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-red-50/50 border border-red-200">
+              <div>
+                <h4 className="text-sm font-semibold text-red-900">Disconnect Integration</h4>
+                <p className="text-xs text-red-700 mt-0.5">
+                  Disconnecting will stop automated review responses and disable sync until you reconnect.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDisconnectModalOpen(true)}
+                disabled={disconnectGoogle.isPending}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors shadow-xs shrink-0 cursor-pointer"
+              >
+                <Unlink className="w-3.5 h-3.5" />
+                {disconnectGoogle.isPending ? 'Disconnecting...' : 'Disconnect Profile'}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -1204,6 +1239,42 @@ export default function GoogleBusinessPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Disconnect Confirmation Modal */}
+      {disconnectModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl border border-gray-100 animate-in fade-in zoom-in-95">
+            <div className="w-10 h-10 rounded-xl bg-red-100 border border-red-200 flex items-center justify-center text-red-600">
+              <Unlink className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-gray-900">Disconnect Google Business?</h3>
+              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                Automated replies to reviews will be paused immediately. Your templates and configuration settings will remain intact and you can reconnect anytime.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => setDisconnectModalOpen(false)}
+                disabled={disconnectGoogle.isPending}
+                className="px-3.5 py-2 text-xs font-medium rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDisconnect}
+                disabled={disconnectGoogle.isPending}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors shadow-xs cursor-pointer"
+              >
+                <Unlink className="w-3.5 h-3.5" />
+                {disconnectGoogle.isPending ? 'Disconnecting...' : 'Disconnect'}
+              </button>
+            </div>
           </div>
         </div>
       )}

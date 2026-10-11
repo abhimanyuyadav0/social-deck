@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { X, ExternalLink, Users, Linkedin, Sparkles, Youtube, Instagram, Facebook } from 'lucide-react';
+import { X, ExternalLink, Users, Linkedin, Sparkles, Youtube, Instagram, Facebook, Store } from 'lucide-react';
 
 export function DocLink({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -758,6 +758,64 @@ export function FacebookHelpModal({ open, onClose }: { open: boolean; onClose: (
       subtitle="Time To Future Pvt. Ltd. — developer app configuration for Social Deck"
     >
       <FacebookGuideContent />
+    </HelpShell>
+  );
+}
+
+export function GoogleBusinessGuideContent() {
+  return (
+    <div className="space-y-5">
+      <div className="flex items-start gap-2 text-blue-800 bg-blue-50 rounded-xl px-3 py-2 text-xs">
+        <Store className="w-4 h-4 shrink-0 mt-0.5" />
+        <span>
+          Connect your Google Business Profile to auto-reply to reviews with custom templates or AI,
+          sync review history, and generate 5-star review QR codes for your business counter.
+        </span>
+      </div>
+
+      <Section n={1} title="Authorize the Redirect URI in Google Cloud Console">
+        <p>
+          In <DocLink href="https://console.cloud.google.com/apis/credentials">Google Cloud Console → APIs &amp; Services → Credentials</DocLink>,
+          click your <strong>OAuth 2.0 Client ID</strong> (Web application) and under <strong>Authorized redirect URIs</strong>, add:
+        </p>
+        <p className="font-medium text-[var(--sd-ink)] mt-2">Local development</p>
+        <CodeBlock>http://localhost:5001/api/social-deck/connections/google-business/callback</CodeBlock>
+        <p className="font-medium text-[var(--sd-ink)] mt-2">Production</p>
+        <CodeBlock>https://api.timetofuture.com/api/social-deck/connections/google-business/callback</CodeBlock>
+        <p className="text-amber-800 bg-amber-50 rounded-lg px-2 py-1.5 text-xs mt-2">
+          If this redirect URI is not added to your Google Cloud project, Google will show <strong>Error 400: redirect_uri_mismatch</strong>.
+        </p>
+      </Section>
+
+      <Section n={2} title="Enable Google Business APIs">
+        <p>
+          In <strong>APIs &amp; Services → Library</strong>, enable:
+        </p>
+        <ul className="list-disc pl-4 space-y-1 text-xs">
+          <li><strong>My Business Account Management API</strong></li>
+          <li><strong>My Business Business Information API</strong></li>
+        </ul>
+      </Section>
+
+      <Section n={3} title="Configure environment variables (master-backend)">
+        <CodeBlock>{`GOOGLE_BUSINESS_CLIENT_ID=your_client_id
+GOOGLE_BUSINESS_CLIENT_SECRET=your_client_secret
+GOOGLE_BUSINESS_REDIRECT_URI=http://localhost:5001/api/social-deck/connections/google-business/callback`}</CodeBlock>
+      </Section>
+    </div>
+  );
+}
+
+export function GoogleBusinessHelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <HelpShell
+      open={open}
+      onClose={onClose}
+      wide
+      title="Google Business Profile Setup"
+      subtitle="Authorized Redirect URI and Google OAuth Configuration"
+    >
+      <GoogleBusinessGuideContent />
     </HelpShell>
   );
 }

@@ -195,7 +195,24 @@ export function useDisconnectConnection() {
   return useMutation({
     mutationFn: (id: string) =>
       api(`/social-deck/connections/${id}`, { method: 'DELETE' }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.connections }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.connections });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessConfig });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessReviews });
+    },
+  });
+}
+
+export function useDisconnectGoogleBusiness() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      api('/social-deck/connections/google-business', { method: 'DELETE' }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.connections });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessConfig });
+      qc.invalidateQueries({ queryKey: keys.googleBusinessReviews });
+    },
   });
 }
 
